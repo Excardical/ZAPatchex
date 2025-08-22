@@ -1,0 +1,19 @@
+{
+    "id": "10003",
+    "name": "Vulnerable JS Library (Powered by Retire.js)",
+    "template": {
+        "description": "Refers to third-party libraries or frameworks that have known security vulnerabilities. Attackers typically exploit these flaws by taking advantage of known vulnerabilities listed in public databases, such as the National Vulnerability Database (NVD) or CVE (Common Vulnerabilities and Exposures) entries.",
+        "code_vulnerability": {
+            "title": "Vulnerable Dependency Declaration Identified by Retire.js to check for known insecure versions of libraries by comparing them against an extensive database of vulnerabilities.",
+            "language": "json",
+            "code": "\"dependencies\": {\n  \"[VULNERABLE_LIBRARY_NAME]\": \"[VULNERABLE_VERSION]\"\n}\n// ZAP has detected that this library version has a known vulnerability."
+        },
+        "solution_description": "The solution is to update the vulnerable library to a patched, non-vulnerable version. This is typically done using your project's package manager. You can often check for and fix multiple vulnerabilities at once using built-in audit commands.",
+        "Pseudocode": "1) View Alerts Details for Library Name and its Versions,\n2) Update the Library Accordingly and Ensure it Addresses the Security Vulnerability,\n3) For libraries that are hosted externally (e.g., via a CDN), use Subresource Integrity (SRI) to ensure that the JavaScript files have not been tampered with.", 
+        "Sample Code": {
+            "Description": "Update Anime.js through NPM",
+            "Code": "npm list animejs\nnpm install animejs@latest"
+        },
+        "References": "https://www.cyberly.org/en/how-do-you-use-owasp-zap-to-identify-insecure-javascript-libraries/index.html,\nhttps://www.zaproxy.org/docs/alerts/10003/,\nhttps://www.freecodecamp.org/news/how-to-update-node-and-npm-to-the-latest-version/"
+    }
+}
