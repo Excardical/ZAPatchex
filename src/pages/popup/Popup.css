@@ -1,14 +1,9 @@
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
-  margin: 0;
+.app-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   width: 320px;
+  padding: 16px;
   background-color: #f4f5f7;
   color: #172b4d;
-}
-
-.app-container {
-  padding: 16px;
 }
 
 header {
@@ -40,7 +35,7 @@ label {
   margin-bottom: 4px;
 }
 
-input[type='password'] {
+input[type='text'], input[type='password'] {
   box-sizing: border-box;
   width: 100%;
   padding: 8px;
@@ -49,7 +44,7 @@ input[type='password'] {
   font-size: 1rem;
 }
 
-input[type='password']:focus {
+input[type='text']:focus, input[type='password']:focus {
   outline: none;
   border-color: #4c9aff;
   box-shadow: 0 0 0 2px #cce0ff;
@@ -77,7 +72,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.message {
+.message-container {
   margin-top: 16px;
   padding: 10px;
   border-radius: 4px;
@@ -85,16 +80,21 @@ button:disabled {
   text-align: center;
 }
 
-.message.success {
+.message-container.success {
   background-color: #e3fcef;
-  color: #006644;
+  color: #006442;
 }
 
-.message.error {
+.message-container.error {
   background-color: #ffebe6;
   color: #de350b;
 }
 
-.message.loading {
+.message-container.loading {
   color: #505f79;
+}
+
+.version-info {
+  margin-top: 4px;
+  font-size: 0.8rem;
 }
