@@ -1,3 +1,4 @@
+<h3>A work in progress, Final Year Project</h3>
 <div align="center">
 <img src="/public/OWASP_ZAP_Logo.png" alt="OWASP ZAP Logo">
 <h1>ZAP Auth Helper</h1>
