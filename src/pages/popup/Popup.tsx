@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './Popup.css'; 
 import { ActionsPanel } from './ActionsPanel';
 
 const testZapConnection = async (host: string, apiKey: string): Promise<string> => {
@@ -34,14 +33,12 @@ const testZapConnection = async (host: string, apiKey: string): Promise<string> 
 };
 
 const Popup = () => {
-  // --- STATE MANAGEMENT (No changes here) ---
   const [host, setHost] = useState<string>('http://localhost:8080');
   const [apiKey, setApiKey] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [zapVersion, setZapVersion] = useState<string>('');
 
-  // --- UI LOGIC (No changes here) ---
   const handleConnect = async () => {
     setMessage('');
     setZapVersion('');
@@ -71,20 +68,19 @@ const Popup = () => {
     }
   };
 
-  // If connection is successful, show the ActionsPanel
   if (status === 'success') {
     return <ActionsPanel host={host} apiKey={apiKey} />;
   }
 
   return (
-    <div className="app-container">
-      <header>
-        <h1>ZAP Connector</h1>
-        <p>Connect to the Zed Attack Proxy</p>
+    <div className="p-4 bg-gray-100 text-gray-800 w-80">
+      <header className="text-center mb-5">
+        <h1 className="text-xl font-bold m-0 text-gray-800">ZAP Connector</h1>
+        <p className="m-1 text-sm text-gray-600">Connect to the Zed Attack Proxy</p>
       </header>
       <main>
-        <div className="form-group">
-          <label htmlFor="zapHost">ZAP Host URL</label>
+        <div className="mb-3 text-left">
+          <label htmlFor="zapHost" className="block text-sm font-semibold mb-1">ZAP Host URL</label>
           <input
             type="text"
             id="zapHost"
@@ -92,11 +88,12 @@ const Popup = () => {
             onChange={(e) => setHost(e.target.value)}
             placeholder="http://localhost:8080"
             disabled={status === 'loading'}
+            className="box-border w-full p-2 rounded border border-gray-300 text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="apiKey">ZAP API Key</label>
+        <div className="mb-3 text-left">
+          <label htmlFor="apiKey" className="block text-sm font-semibold mb-1">ZAP API Key</label>
           <input
             type="password"
             id="apiKey"
@@ -104,17 +101,18 @@ const Popup = () => {
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="Enter your ZAP API key"
             disabled={status === 'loading'}
+            className="box-border w-full p-2 rounded border border-gray-300 text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
           />
         </div>
         
-        <button onClick={handleConnect} disabled={status === 'loading'}>
+        <button onClick={handleConnect} disabled={status === 'loading'} className="w-full p-2.5 border-none rounded bg-blue-600 text-white text-base font-semibold cursor-pointer transition-colors hover:enabled:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
           {status === 'loading' ? 'Connecting...' : 'Connect to ZAP'}
         </button>
         
         {message && (
-          <div className={`message-container ${status}`}>
-            <p className="message">{message}</p>
-            {zapVersion && <p className="version-info">{zapVersion}</p>}
+          <div className={`mt-4 p-2.5 rounded font-medium text-center ${status === 'error' ? 'bg-red-100 text-red-700' : 'text-gray-600'}`}>
+            <p>{message}</p>
+            {zapVersion && <p className="mt-1 text-xs">{zapVersion}</p>}
           </div>
         )}
       </main>

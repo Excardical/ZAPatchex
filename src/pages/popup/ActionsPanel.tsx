@@ -1,46 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import './ActionsPanel.css'; 
+import { VulnerabilityPanel, Alert } from './VulnerabilityPanel';
 
-// Define the structure of the alerts summary data
-interface AlertsSummary {
-  High: number;
-  Medium: number;
-  Low: number;
-  Informational: number;
-}
+// The API function to fetch all detailed alerts from ZAP
+const fetchAlerts = async (host: string, apiKey: string): Promise<Alert[]> => {
+  const url = new URL(`${host}/JSON/alert/view/alerts/`);
+  url.searchParams.append('baseurl', '');
+  url.searchParams.append('start', '0');
+  url.searchParams.append('count', '0');
 
-// Props that this component receives from Popup.tsx
-interface ActionsPanelProps {
-  host: string;
-  apiKey: string;
-}
-
-// API function to fetch the alerts summary from ZAP
-const fetchAlertsSummary = async (host: string, apiKey: string): Promise<AlertsSummary> => {
-  const url = new URL(`${host}/JSON/alert/view/alertsSummary/`);
   const response = await fetch(url.toString(), {
     method: 'GET',
     headers: { 'X-ZAP-API-Key': apiKey },
   });
+
   if (!response.ok) {
-    throw new Error('Failed to fetch alerts summary.');
+    throw new Error('Failed to fetch alerts.');
   }
   const data = await response.json();
-  // The API returns an object with an "alertsSummary" key
-  return data.alertsSummary;
+  return data.alerts;
 };
 
-export const ActionsPanel: React.FC<ActionsPanelProps> = ({ host, apiKey }) => {
-  const [summary, setSummary] = useState<AlertsSummary | null>(null);
+export const ActionsPanel: React.FC<{ host: string; apiKey: string }> = ({ host, apiKey }) => {
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // useEffect hook runs this code once when the component is first rendered
   useEffect(() => {
-    const getSummary = async () => {
+    const getAlerts = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        const summaryData = await fetchAlertsSummary(host, apiKey);
-        setSummary(summaryData);
+        const alertsData = await fetchAlerts(host, apiKey);
+        setAlerts(alertsData);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(message);
@@ -49,53 +40,28 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({ host, apiKey }) => {
       }
     };
 
-    getSummary();
-  }, [host, apiKey]); // Dependencies: re-run if host or apiKey change
+    getAlerts();
+  }, [host, apiKey]);
 
   const renderContent = () => {
     if (isLoading) {
-      return <p className="loading-text">Loading alert summary...</p>;
+      return <p className="text-center text-gray-400 p-4">Loading alerts...</p>;
     }
 
     if (error) {
-      return <p className="error-text">Error: {error}</p>;
+      return <p className="text-center text-red-500 p-4">Error: {error}</p>;
     }
 
-    if (summary) {
-      return (
-        <div className="summary-grid">
-          <div className="risk-card risk-high">
-            <div className="risk-count">{summary.High}</div>
-            <div className="risk-label">High</div>
-          </div>
-          <div className="risk-card risk-medium">
-            <div className="risk-count">{summary.Medium}</div>
-            <div className="risk-label">Medium</div>
-          </div>
-          <div className="risk-card risk-low">
-            <div className="risk-count">{summary.Low}</div>
-            <div className="risk-label">Low</div>
-          </div>
-          <div className="risk-card risk-info">
-            <div className="risk-count">{summary.Informational}</div>
-            <div className="risk-label">Info</div>
-          </div>
-        </div>
-      );
+    if (alerts.length > 0) {
+      return <VulnerabilityPanel alerts={alerts} />;
     }
 
-    return null; // Should not happen, but good practice
+    return <p className="text-center text-gray-400 p-4">No alerts found.</p>;
   };
 
   return (
-    <div className="actions-panel">
-      <header className="actions-header">
-        <h2>Alerts Summary</h2>
-        <span className="status-indicator">● Connected</span>
-      </header>
-      <main className="actions-main">
-        {renderContent()}
-      </main>
+    <div className="font-sans w-80 h-[550px] bg-gray-900 text-white">
+      {renderContent()}
     </div>
   );
 };
