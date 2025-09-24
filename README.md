@@ -1,181 +1,117 @@
+<h3>A work in progress, Final Year Project</h3>
 <div align="center">
-<img src="public/icon-128.png" alt="logo"/>
-<h1> Minimalist Chrome/Firefox Extension Boilerplate with<br/>React + Vite + TypeScript + TailwindCSS</h1>
+<img src="/public/OWASP_ZAP_Logo.png" alt="OWASP ZAP Logo">
+<h1>ZAP Auth Helper</h1>
+<h3>A ZAP Add-on to simplify and automate authenticated web scanning.</h3>
 
 <h5>
-This template repository is a side product of my Chrome Extension <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">Supatabs</a>.
-<br />
-If you tend to have tons of tabs open, or are a OneTab user, make sure to check it out <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">here</a>!
+Tired of manually configuring authentication scripts? This add-on provides a user-friendly interface to set up complex authentication flows, so you can focus on finding vulnerabilities, not fighting with session management. 🛡️
+<br/>
+It's built to work seamlessly within your existing ZAP workflow.
 </h5>
-
-<h5>Supatabs is an example and showcase of what you can develop with this template. (anything you want, really 🚀)</h5>
 
 </div>
 
-## Table of Contents
+Table of Contents
 
-- [Intro](#intro)
-- [Features](#features)
-- [Usage](#usage)
-  - [Getting Started](#gettingStarted) 
-  - [Customization](#customization)
-  - [Publish](#publish)
-- [Tech Docs](#tech)
-- [Credit](#credit)
-- [Contributing](#contributing)
+    Introduction
 
+    Features
 
-## Intro <a name="intro"></a>
-This boilerplate is meant to be a minimal quick start for creating chrome/firefox extensions using React, Typescript and Tailwind CSS.
+    Installation
 
-It includes all possible pages such as **new tab**, **dev panel**, **pop up**, etc., as well as corresponding manifest settings by default.
-You will likely have to customize/delete some of the pages (see docs below).
+    Getting Started
 
-You can build dist files for both Chrome and Firefox with manifest v3.
+    Documentation
 
-If you are looking for a React focused way to access the local storage, I also implemented a chrome local/sync storage hook. The hook works
-well with this template. [Check it out here](https://gist.github.com/JohnBra/c81451ea7bc9e77f8021beb4f198ab96).
+Introduction <a name="introduction"></a>
 
-## Features <a name="features"></a>
-- [React 19](https://reactjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [i18n (optional)](https://developer.chrome.com/docs/extensions/reference/api/i18n)
-- [Cross browser development with polyfill (optional)](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#basic-setup-with-module-bundlers)
-- [ESLint](https://eslint.org/)
-- [Chrome Extension Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Github Action](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml) to build and zip your extension (manual trigger)
+ZAP Auth Helper is an add-on for OWASP ZAP designed to streamline the process of configuring authenticated scans. It provides a dedicated UI panel to manage authentication strategies like form-based login, JSON Web Tokens (JWT), and OAuth 2.0, complete with automatic token detection, session verification, and script generation.
 
-## Usage <a name="usage"></a>
+This add-on is perfect for security professionals and developers who regularly perform authenticated scans and want a faster, more reliable way to handle user sessions.
 
-### Getting Started <a name="gettingStarted"></a>
+Features <a name="features"></a>
 
-#### Developing and building
-This template comes with build configs for both Chrome and Firefox. Running
-`dev` or `build` commands without specifying the browser target will build
-for Chrome by default.
+    Intuitive UI: A dedicated tab in ZAP for configuring all authentication settings. No more manual scripting for common scenarios!
 
-1. Clone this repository or click "Use this template"
-2. Change `name` and `description` in `manifest.json`
-3. Run `yarn` or `npm i` (check your node version >= 16)
-4. Run `yarn dev[:chrome|:firefox]`, or `npm run dev[:chrome|:firefox]`
+    Multiple Auth Methods: Out-of-the-box support for:
 
-Running a `dev` command will build your extension and watch for changes in the 
-source files. Changing the source files will refresh the corresponding 
-`dist_<chrome|firefox>` folder.
+        Form-based authentication
 
-To create an optimized production build, run `yarn build[:chrome|:firefox]`, or
-`npm run build[:chrome|:firefox]`.
+        JSON Web Tokens (JWT), including automatic refresh token handling
 
-#### Load your extension
-For Chrome
-1. Open - Chrome browser
-2. Access - [chrome://extensions](chrome://extensions)
-3. Tick - Developer mode
-4. Find - Load unpacked extension
-5. Select - `dist_chrome` folder in this project (after dev or build)
+        OAuth 2.0 flows
 
-For Firefox
-1. Open - Firefox browser
-2. Access - [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
-3. Click - Load temporary Add-on
-4. Select - any file in `dist_firefox` folder (i.e. `manifest.json`) in this project (after dev or build)
+    Auto-Detection: Automatically detects login forms and JWTs in HTTP traffic to suggest configurations.
 
-### Customization <a name="customization"></a>
+    Session Verification: Define logged-in/logged-out patterns to ensure ZAP's scanner remains authenticated throughout the scan.
 
-#### Adding / removing pages
-The template includes source code for **all** of the extension pages (i.e. New Tab, Dev Tools, Popup, Side Panel
-etc.). You will likely have to customize it to fit your needs.
+    Context-Aware: Easily apply and manage different authentication configurations for different ZAP Contexts.
 
-E.g. you don't want the newtab page to activate whenever you open a new tab:
-1. remove the directory `newtab` and its contents in `src/pages`
-2. remove `chrome_url_overrides: { newtab: 'src/pages/newtab/index.html' },` in `manifest.json`
+    Import/Export: Save and load your authentication configurations to reuse across projects.
 
-Some pages like the "Side Panel" don't work the exact same in Chrome and Firefox. While this template includes
-the source code for the side panel, it won't automatically be included in the dist file to prevent cross browser
-build warnings.
+Installation <a name="installation"></a>
+(In Progress...)
+Prerequisites
 
-To include the side panel for Chrome add the following to the `manifest.json`:
+    OWASP ZAP version 2.12.0 or newer.
 
-```typescript
-{
-  "manifest_version": 3,
-  // ...
-  "permissions": [
-    "activeTab",
-    "sidePanel" // <-- permission for sidepanel
-  ],
-  // ...
-  "side_panel": {
-    "default_path": "src/pages/panel/index.html" // <-- tell vite to include it in the build files
-  },
-  // ...
-}
-```
+From the ZAP Marketplace (Recommended)
 
-If you need to declare pages in addition to the manifest pages, e.g. a custom `app` page, create a 
-new folder in the `pages` directory and add the corresponding `.html`, `.tsx` and `.css` 
-files (see `options/*` for an example to copy). Then include the root html in the `vite.config.base.ts` 
-file under `build.rollupOptions.input` like so:
+    In ZAP, click the Manage Add-ons button (marketplace icon).
 
-```typescript
-// ...
-build: {
-   rollupOptions: {
-      input: {
-         app: resolve(pagesDir, "app", "index.html"),
-      },
-      output: {
-         entryFileNames: (chunk) => `src/pages/${chunk.name}/index.js`,
-      },
-   },
-}
-// ...
-```
+    Select the Marketplace tab.
 
-#### Styling
-CSS files in the `src/pages/*` directories are not necessary. They are left in there in case you want 
-to use it in combination with Tailwind CSS. **Feel free to delete them**.
+    Find "Auth Helper" in the list and click Install.
 
-Tailwind can be configured, themed and extended according to the [docs](https://tailwindcss.com/docs/theme).
+    Restart ZAP when prompted.
 
-#### Internationalization (i18n)
-To enable internationalization set the `localize` flag in the `vite.config.base.ts` to `true`.
+Manual Installation
 
-The template includes a directory `locales` with a basic setup for english i18n. Enabling i18n
-will pull the name and description for your extension from the english translation files instead
-of the manifest.
+    Download the latest .zap file from the Releases page.
 
-Follow the instructions in the [official docs](https://developer.chrome.com/docs/extensions/reference/api/i18n#description) 
-to add other translations and retrieve them in the extension.
+    In ZAP, go to File > Load Add-on file....
 
-If you don't need i18n you can ignore the `locales` directory until you need it, as it won't
-be copied into the build folder unless the `localize` flag is set to `true`.
+    Select the downloaded .zap file and click Open.
 
-### Publish your extension to the CWS<a name="publish"></a>
-To upload an extension to the Chrome store you have to pack (zip) it and then upload it to your item 
-in the Chrome Web Store.
+    ZAP will install the add-on and prompt for a restart.
 
-This repo includes a Github Action Workflow to create a 
-[optimized prod build and the zip file](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml).
+Getting Started <a name="getting-started"></a> 
+(In Progress...)
+Once installed, the Auth Helper is ready to use.
 
-To run the workflow do the following:
-1. Go to the **"Actions"** tab in your forked repository from this template
-2. In the left sidebar click on **"Build and Zip Chrome Extension"**
-3. Click on **"Run Workflow"** and select the main branch, then **"Run Workflow"**
-4. Refresh the page and click the most recent run
-5. In the summary page **"Artifacts"** section click on the generated **"vite-web-extension-chrome"**
-6. Upload this file to the Chrome Web Store as described [here](https://developer.chrome.com/docs/webstore/publish/)
+Configure a New Authenticated Context
 
-# Tech Docs <a name="tech"></a>
-- [Vite](https://vitejs.dev/)
-- [Vite Plugins](https://vitejs.dev/guide/api-plugin.html)
-- [Chrome Extension with manifest 3](https://developer.chrome.com/docs/extensions/mv3/)
-- [Chrome Extension i18n](https://developer.chrome.com/docs/extensions/reference/api/i18n#description)
-- [Cross browser development with webextension-polyfill](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#webextension-browser-api-polyfill)
-- [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin)
-- [Rollup](https://rollupjs.org/guide/en/)
-- [Tailwind CSS 4](https://tailwindcss.com/docs/configuration)
+    Define a Context: Make sure the target application is included in a ZAP Context. You can create one by right-clicking the site in the Sites Tree and selecting Include in Context > New Context.
 
-# Contributing <a name="contributing"></a>
-Feel free to open PRs or raise issues!
+    Open Auth Helper: Navigate to the Auth Helper tab located in the bottom panel of the ZAP UI.
+
+    Select Context and Strategy:
+
+        From the dropdown menu, choose the Context you want to configure.
+
+        Click "Add New Strategy" and select the authentication type (e.g., "Form-based Authentication").
+
+    Fill in the Details:
+
+        The add-on will prompt for necessary information, such as the Login Page URL, POST data parameters, username, and password. For JWTs, it will ask for token locations.
+
+        Use the "Auto-Detect" feature to try and populate these fields automatically from your proxied traffic.
+
+    Verify the Setup:
+
+        Define a "Logged-in Indicator" (e.g., the presence of a "Logout" button on a page) so the add-on can verify the session is active.
+
+        Click the "Test" button. The add-on will attempt to log in and report its success or failure in the output panel.
+
+    Enable and Scan: Once verification is successful, check the "Enable for Context" box. Now, when you run an Active Scan or Spider against this Context, ZAP will automatically handle authentication. ✅
+
+Documentation <a name="documentation"></a>
+
+This add-on leverages core ZAP functionalities. For more advanced use cases, the following resources are helpful:
+
+    OWASP ZAP User Guide
+
+    ZAP Authentication and Session Management
+
+    ZAP Scripting Documentation

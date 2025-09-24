@@ -1,0 +1,19 @@
+{
+    "id": "10003",
+    "name": "Vulnerable JS Library (Powered by Retire.js)",
+    "template": {
+        "description": "This application uses a third-party JavaScript library with a known security vulnerability. Attackers can exploit these flaws to compromise the application.",
+        "code_vulnerability": {
+            "title": "Vulnerable JavaScript Library Detected",
+            "language": "text",
+            "code": "The following JavaScript file, identified by Retire.js, is a known vulnerable library:\n\nURL: {{URL}}\n\nEvidence: {{EVIDENCE}}"
+        },
+        "solution_description": "The best solution is to update the vulnerable library to a patched, non-vulnerable version using your project's package manager (e.g., npm, yarn). If the library is hosted externally (e.g., via a CDN), consider hosting it locally or using Subresource Integrity (SRI) to ensure the file has not been tampered with.",
+        "Pseudocode": "1) Identify the library and vulnerable version from the ZAP alert details.\n2) Locate this dependency in your project's `package.json` or equivalent.\n3) Update the library to the latest secure version (e.g., `npm install [library-name]@latest`).\n4) Rebuild and redeploy your application.",
+        "Sample Code": {
+            "Description": "Example: Update a vulnerable library using npm",
+            "Code": "# Check for outdated packages\nnpm outdated\n\n# Update a specific package to the latest version\nnpm install [library-name]@latest\n\n# Alternatively, run an audit to fix multiple vulnerabilities\nnpm audit fix"
+        },
+        "References": "https://www.zaproxy.org/docs/alerts/10003/"
+    }
+}
