@@ -15,14 +15,7 @@ const askQuestion = (query: string): Promise<string> => {
 };
 
 // --- Main Script Logic ---
-async function main() {
-  const zapApiKey = await askQuestion("🔑 Please enter your ZAP API Key: ");
-  if (!zapApiKey) {
-    console.error("❌ API Key is required. Script stopped.");
-    rl.close();
-    return;
-  }
-
+async function runOnce(zapApiKey: string) {
   console.log("📡 Fetching alerts from ZAP...");
   const apiUrl = new URL(`${ZAP_HOST}/JSON/alert/view/alerts/`);
   apiUrl.searchParams.append('baseurl', '');
@@ -47,7 +40,7 @@ async function main() {
       return;
     }
 
-    // Group alerts to show a unique list
+    // Group alerts
     const groupedAlerts = new Map<string, any>();
     alerts.forEach(alert => {
       if (!groupedAlerts.has(alert.name)) {
@@ -63,17 +56,19 @@ async function main() {
       console.log(`[${index}] - ${alert.name} (${alert.risk})`);
     });
 
-    const choiceStr = await askQuestion("\nEnter the number of the vulnerability to process: ");
-    const choice = parseInt(choiceStr, 10);
+    const choiceStr = await askQuestion("\nEnter the number of the vulnerability to process (or 'q' to quit): ");
+    if (choiceStr.toLowerCase() === 'q') {
+      return 'quit';
+    }
 
+    const choice = parseInt(choiceStr, 10);
     if (isNaN(choice) || choice < 0 || choice >= uniqueAlerts.length) {
-      console.error("❌ Invalid selection. Please run the script again.");
+      console.error("❌ Invalid selection.");
       return;
     }
 
     const selectedAlert = uniqueAlerts[choice];
 
-    // Format the output text for the LLM prompt
     let promptText = `
 Based on the following ZAP alert data:
 
@@ -95,7 +90,6 @@ Based on the following ZAP alert data:
 `;
     });
 
-    // Copy to clipboard and log to console
     await clipboardy.write(promptText.trim());
     console.log("\n✅ Successfully copied the formatted alert to your clipboard!");
     console.log("\n--- Start of Prompt Text ---");
@@ -104,8 +98,24 @@ Based on the following ZAP alert data:
 
   } catch (error) {
     console.error("\n❌ An error occurred:", (error as Error).message);
-  } finally {
+  }
+}
+
+async function main() {
+  const zapApiKey = await askQuestion("🔑 Please enter your ZAP API Key: ");
+  if (!zapApiKey) {
+    console.error("❌ API Key is required. Script stopped.");
     rl.close();
+    return;
+  }
+
+  while (true) {
+    const result = await runOnce(zapApiKey);
+    if (result === 'quit') {
+      console.log("👋 Exiting...");
+      rl.close();
+      break;
+    }
   }
 }
 
