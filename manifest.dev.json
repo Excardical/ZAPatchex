@@ -1,17 +1,16 @@
 {
   "action": {
-    "default_icon": "public/dev-icon-32.png",
+    "default_icon": "OWASP_ZAP_Logo.png",
     "default_popup": "src/pages/popup/index.html"
   },
   "icons": {
-    "128": "public/dev-icon-128.png"
+    "128": "OWASP_ZAP_Logo.png"
   },
   "web_accessible_resources": [
     {
       "resources": [
         "contentStyle.css",
-        "dev-icon-128.png",
-        "dev-icon-32.png"
+        "OWASP_ZAP_Logo.png"
       ],
       "matches": []
     }

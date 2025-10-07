@@ -77,22 +77,22 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string }> = ({ host,
 
   const renderContent = () => {
     if (isLoading) {
-      return <p className="text-center text-gray-400 p-4">Loading alerts...</p>;
+      return <div className="flex items-center justify-center h-full"><p className="text-slate-400 p-4">Loading alerts...</p></div>;
     }
 
     if (error) {
-      return <p className="text-center text-red-500 p-4">Error: {error}</p>;
+      return <div className="flex items-center justify-center h-full"><p className="text-red-400 p-4">Error: {error}</p></div>;
     }
 
     if (groupedAlerts.length > 0) {
       return <VulnerabilityPanel alerts={groupedAlerts} />;
     }
 
-    return <p className="text-center text-gray-400 p-4">No alerts found.</p>;
+    return <div className="flex items-center justify-center h-full"><p className="text-slate-400 p-4">No alerts found.</p></div>;
   };
 
   return (
-    <div className="font-sans w-80 h-[550px] bg-gray-900 text-white">
+    <div className="font-sans w-[450px] h-[550px] bg-slate-900 text-slate-200">
       {renderContent()}
     </div>
   );
