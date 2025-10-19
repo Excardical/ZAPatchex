@@ -6,7 +6,7 @@
     "page": "src/pages/options/index.html"
   },
   "action": {
-    "default_popup": "src/pages/popup/index.html",
+    "default_title": "Open ZAPatchex Panel",
     "default_icon": {
       "32": "OWASP_ZAP_Logo.png"
     }
@@ -16,13 +16,23 @@
   },
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "tabs",
+    "sidePanel",
+    "contextMenus"
   ],
+  "side_panel": {
+    "default_path": "src/pages/main/index.html"
+  },
   "host_permissions": [
     "http://localhost/*",
     "http://127.0.0.1/*",
     "http://zap/*"
   ],
+  "background": {
+    "service_worker": "src/pages/background/index.ts",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "matches": [
@@ -43,7 +53,8 @@
     {
       "resources": [
         "contentStyle.css",
-        "OWASP_ZAP_Logo.png"
+        "OWASP_ZAP_Logo.png",
+        "src/pages/main/index.html"
       ],
       "matches": []
     }

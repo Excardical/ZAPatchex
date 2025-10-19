@@ -25,7 +25,12 @@ export default mergeConfig(
     ],
     build: {
       ...baseBuildOptions,
-      outDir
+      outDir,
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'src/pages/main/index.html'),
+        }
+      }
     },
   })
 )
