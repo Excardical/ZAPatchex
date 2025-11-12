@@ -1,0 +1,130 @@
+{
+  "categorized_todo": {
+    "A01_Broken_Access_Control": [
+      { "pluginId": 10045, "title": "Source Code Disclosure - /WEB-INF Folder", "type": "active" },
+      { "pluginId": 20017, "title": "Source Code Disclosure - CVE-2012-1823", "type": "active" },
+      { "pluginId": 40034, "title": ".env Information Leak", "type": "active" },
+      { "pluginId": 40035, "title": "Hidden File Finder", "type": "active" },
+      { "pluginId": 10033, "title": "Directory Browsing", "type": "passive" },
+      { "pluginId": 3, "title": "Session ID in URL Rewrite", "type": "passive" },
+      { "pluginId": 10057, "title": "Username Hash Found", "type": "passive" },
+      { "pluginId": 10105, "title": "Weak Authentication Method", "type": "passive" },
+      { "pluginId": 10111, "title": "Authentication Request Identified", "type": "passive" },
+      { "pluginId": 10112, "title": "Session Management Response Identified", "type": "passive" },
+      { "pluginId": 10113, "title": "Verification Request Identified", "type": "passive" },
+      { "pluginId": 10029, "title": "Cookie Poisoning", "type": "passive" },
+      { "pluginId": 90033, "title": "Loosely Scoped Cookie", "type": "passive" }
+    ],
+    "A02_Cryptographic_Failures": [
+      { "pluginId": 10097, "title": "Hash Disclosure", "type": "passive" },
+      { "pluginId": 20015, "title": "Heartbleed OpenSSL Vulnerability", "type": "active" },
+      { "pluginId": 10034, "title": "Heartbleed OpenSSL Vulnerability (Indicative)", "type": "passive" },
+      { "pluginId": 90024, "title": "Generic Padding Oracle", "type": "active" }
+    ],
+    "A03_Injection": [
+      { "pluginId": 40012, "title": "Cross Site Scripting (Reflected)", "type": "active" },
+      { "pluginId": 40014, "title": "Cross Site Scripting (Persistent)", "type": "active" },
+      { "pluginId": 40016, "title": "Cross Site Scripting (Persistent) - Prime", "type": "active" },
+      { "pluginId": 40017, "title": "Cross Site Scripting (Persistent) - Spider", "type": "active" },
+      { "pluginId": 40018, "title": "SQL Injection", "type": "active" },
+      { "pluginId": 40019, "title": "SQL Injection - MySQL", "type": "active" },
+      { "pluginId": 40020, "title": "SQL Injection - Hypersonic SQL", "type": "active" },
+      { "pluginId": 40021, "title": "SQL Injection - Oracle", "type": "active" },
+      { "pluginId": 40022, "title": "SQL Injection - PostgreSQL", "type": "active" },
+      { "pluginId": 40024, "title": "SQL Injection - SQLite", "type": "active" },
+      { "pluginId": 40027, "title": "SQL Injection - MsSQL", "type": "active" },
+      { "pluginId": 40026, "title": "Cross Site Scripting (DOM Based)", "type": "active" },
+      { "pluginId": 40003, "title": "CRLF Injection", "type": "active" },
+      { "pluginId": 90019, "title": "Server Side Code Injection", "type": "active" },
+      { "pluginId": 90020, "title": "Remote OS Command Injection", "type": "active" },
+      { "pluginId": 90021, "title": "XPath Injection", "type": "active" },
+      { "pluginId": 90023, "title": "XML External Entity Attack", "type": "active" },
+      { "pluginId": 90035, "title": "Server Side Template Injection", "type": "active" },
+      { "pluginId": 90036, "title": "Server Side Template Injection (Blind)", "type": "active" },
+      { "pluginId": 30001, "title": "Buffer Overflow", "type": "active" },
+      { "pluginId": 30002, "title": "Format String Error", "type": "active" },
+      { "pluginId": 40008, "title": "Parameter Tampering", "type": "active" },
+      { "pluginId": 40009, "title": "Server Side Include", "type": "active" },
+      { "pluginId": 90017, "title": "XSLT Injection", "type": "active" },
+      { "pluginId": 90026, "title": "SOAP Action Spoofing", "type": "active" },
+      { "pluginId": 90029, "title": "SOAP XML Injection", "type": "active" },
+      { "pluginId": 10031, "title": "User Controllable HTML Element Attribute (Potential XSS)", "type": "passive" },
+      { "pluginId": 10043, "title": "User Controllable JavaScript Event (XSS)", "type": "passive" }
+    ],
+    "A04_Insecure_Design": [
+      { "pluginId": 10058, "title": "GET for POST", "type": "active" },
+      { "pluginId": 20019, "title": "External Redirect", "type": "active" },
+      { "pluginId": 10028, "title": "Off-site Redirect", "type": "passive" },
+      { "pluginId": 10108, "title": "Reverse Tabnabbing", "type": "passive" },
+      { "pluginId": 10202, "title": "Absence of Anti-CSRF Tokens", "type": "passive" }
+    ],
+    "A05_Security_Misconfiguration": [
+      { "pluginId": 0, "title": "Directory Browsing", "type": "active" },
+      { "pluginId": 20018, "title": "Remote Code Execution - CVE-2012-1823", "type": "active" },
+      { "pluginId": 40032, "title": ".htaccess Information Leak", "type": "active" },
+      { "pluginId": 40042, "title": "Spring Actuator Information Leak", "type": "active" },
+      { "pluginId": 90034, "title": "Cloud Metadata Potentially Exposed", "type": "active" },
+      { "pluginId": 10015, "title": "Re-examine Cache-control Directives", "type": "passive" },
+      { "pluginId": 10020, "title": "Anti-clickjacking Header", "type": "passive" },
+      { "pluginId": 10021, "title": "X-Content-Type-Options Header Missing", "type": "passive" },
+      { "pluginId": 10035, "title": "Strict-Transport-Security Header", "type": "passive" },
+      { "pluginId": 10036, "title": "HTTP Server Response Header", "type": "passive" },
+      { "pluginId": 10037, "title": "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)", "type": "passive" },
+      { "pluginId": 10038, "title": "Content Security Policy (CSP) Header Not Set", "type": "passive" },
+      { "pluginId": 10039, "title": "X-Backend-Server Header Information Leak", "type": "passive" },
+      { "pluginId": 10040, "title": "Secure Pages Include Mixed Content", "type": "passive" },
+      { "pluginId": 10041, "title": "HTTP to HTTPS Insecure Transition in Form Post", "type": "passive" },
+      { "pluginId": 10042, "title": "HTTPS to HTTP Insecure Transition in Form Post", "type": "passive" },
+      { "pluginId": 10044, "title": "Big Redirect Detected (Potential Sensitive Information Leak)", "type": "passive" },
+      { "pluginId": 10050, "title": "Retrieved from Cache", "type": "passive" },
+      { "pluginId": 10052, "title": "X-ChromeLogger-Data (XCOLD) Header Information Leak", "type": "passive" },
+      { "pluginId": 10054, "title": "Cookie without SameSite Attribute", "type": "passive" },
+      { "pluginId": 10055, "title": "CSP", "type": "passive" },
+      { "pluginId": 10056, "title": "X-Debug-Token Information Leak", "type": "passive" },
+      { "pluginId": 10061, "title": "X-AspNet-Version Response Header", "type": "passive" },
+      { "pluginId": 10062, "title": "PII Disclosure", "type": "passive" },
+      { "pluginId": 10096, "title": "Timestamp Disclosure", "type": "passive" },
+      { "pluginId": 10104, "title": "User Agent Fuzzer", "type": "active" },
+      { "pluginId": 10109, "title": "Modern Web Application", "type": "passive" },
+      { "pluginId": 10116, "title": "ZAP is Out of Date", "type": "passive" },
+      { "pluginId": 90011, "title": "Charset Mismatch", "type": "passive" },
+      { "pluginId": 90022, "title": "Application Error Disclosure", "type": "passive" },
+      { "pluginId": 90030, "title": "WSDL File Detection", "type": "passive" },
+      { "pluginId": 10010, "title": "Cookie No HttpOnly Flag", "type": "passive" },
+      { "pluginId": 10011, "title": "Cookie Without Secure Flag", "type": "passive" },
+      { "pluginId": 10019, "title": "Content-Type Header Missing", "type": "passive" },
+      { "pluginId": 10023, "title": "Information Disclosure - Debug Error Messages", "type": "passive" },
+      { "pluginId": 10024, "title": "Information Disclosure - Sensitive Information in URL", "type": "passive" },
+      { "pluginId": 10025, "title": "Information Disclosure - Sensitive Information in HTTP Referrer Header", "type": "passive" },
+      { "pluginId": 10027, "title": "Information Disclosure - Suspicious Comments", "type": "passive" },
+      { "pluginId": 10030, "title": "User Controllable Charset", "type": "passive" },
+      { "pluginId": 10032, "title": "Viewstate", "type": "passive" },
+      { "pluginId": 10017, "title": "Cross-Domain JavaScript Source File Inclusion", "type": "passive" },
+      { "pluginId": 10098, "title": "Cross-Domain Misconfiguration", "type": "passive" },
+      { "pluginId": 10115, "title": "Script Served From Malicious Domain (polyfill)", "type": "passive" },
+      { "pluginId": 90001, "title": "Insecure JSF ViewState", "type": "passive" }
+    ],
+    "A06_Vulnerable_and_Outdated_Components": [
+      { "pluginId": 40043, "title": "Log4Shell", "type": "active" },
+      { "pluginId": 40045, "title": "Spring4Shell", "type": "active" },
+      { "pluginId": 10003, "title": "Vulnerable JS Library", "type": "passive" }
+    ],
+    "A07_Identification_and_Authentication_Failures": [
+      { "pluginId": 40028, "title": "ELMAH Information Leak", "type": "passive" },
+      { "pluginId": 40029, "title": "Trace.axd Information Leak", "type": "passive" }
+    ],
+    "A08_Software_and_Data_Integrity_Failures": [],
+    "A09_Security_Logging_and_Monitoring_Failures": [
+      { "pluginId": 2, "title": "Private IP Disclosure", "type": "passive" },
+      { "pluginId": 50003, "title": "Stats Passive Scan Rule", "type": "passive" }
+    ],
+    "A10_Server-Side_Request_Forgery": [
+      { "pluginId": 6, "title": "Path Traversal", "type": "active" },
+      { "pluginId": 7, "title": "Remote File Inclusion", "type": "active" }
+    ],
+    "Other_Scanners": [
+      { "pluginId": 50000, "title": "Script Active Scan Rules", "type": "active" },
+      { "pluginId": 50001, "title": "Script Passive Scan Rules", "type": "passive" }
+    ]
+  }
+}
