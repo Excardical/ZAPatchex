@@ -25,7 +25,9 @@ export default mergeConfig(
     build: {
       ...baseBuildOptions,
       outDir
+      // The rollupOptions pointing to 'main' have been removed.
     },
     publicDir: resolve(__dirname, 'public'),
   })
 )
+
