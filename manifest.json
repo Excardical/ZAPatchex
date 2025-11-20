@@ -8,11 +8,17 @@
   "action": {
     "default_popup": "src/pages/popup/index.html",
     "default_icon": {
-      "32": "OWASP_ZAP_Logo.png"
+      "16": "Icons/icon-32.png",
+      "32": "Icons/icon-32.png",
+      "48": "Icons/icon-128.png",
+      "128": "Icons/icon-128.png"
     }
   },
   "icons": {
-    "128": "OWASP_ZAP_Logo.png"
+    "16": "Icons/icon-32.png",
+    "32": "Icons/icon-32.png",
+    "48": "Icons/icon-128.png",
+    "128": "Icons/icon-128.png"
   },
   "permissions": [
     "activeTab",
@@ -43,7 +49,9 @@
     {
       "resources": [
         "contentStyle.css",
-        "OWASP_ZAP_Logo.png"
+        "Icons/OWASP_ZAP_Logo.png",
+        "Icons/*",
+        "Font/*"
       ],
       "matches": []
     }

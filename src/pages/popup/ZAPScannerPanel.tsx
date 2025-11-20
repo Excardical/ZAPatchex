@@ -86,6 +86,23 @@ export const ZapScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Add Merriweather font loading
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @import url('${chrome.runtime.getURL('Font/MerriweatherSans-Regular.ttf')}');
+
+      .merriweather-font {
+        font-family: 'Merriweather Sans', sans-serif;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   useEffect(() => {
     const getCurrentTabUrl = async () => {
       try {
@@ -195,8 +212,8 @@ export const ZapScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     <div className="font-sans w-[450px] h-[550px] bg-slate-900 text-slate-200 p-4 flex flex-col">
       <header className="flex-shrink-0 pb-2 border-b border-slate-700 mb-4">
         <div className="flex items-center gap-2 mb-2">
-           <img src="OWASP_ZAP_Logo.png" alt="ZAP Logo" className="w-7 h-7" />
-           <span className="text-lg font-bold">ZAP Scanner</span>
+           <img src={chrome.runtime.getURL('Icons/Github-Octicons-Code-review-16.512.png')} alt="ZAP Logo" className="w-7 h-7 brightness-0 invert" />
+           <span className="text-lg font-bold merriweather-font">ZAP Scanner</span>
          </div>
       </header>
 
