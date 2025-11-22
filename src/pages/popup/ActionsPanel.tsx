@@ -50,7 +50,7 @@ const groupAlerts = (alerts: Alert[]): GroupedAlert[] => {
 };
 
 
-export const ActionsPanel: React.FC<{ host: string; apiKey: string }> = ({ host, apiKey }) => {
+export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScanner?: () => void }> = ({ host, apiKey, onBackToScanner }) => {
   const [groupedAlerts, setGroupedAlerts] = useState<GroupedAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +87,7 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string }> = ({ host,
     }
 
     if (groupedAlerts.length > 0) {
-      return <VulnerabilityPanel alerts={groupedAlerts} />;
+      return <VulnerabilityPanel alerts={groupedAlerts} onBackToScanner={onBackToScanner} />;
     }
 
     return <div className="flex items-center justify-center h-full"><p className="text-slate-400 p-4">No alerts found. Run a scan first.</p></div>;

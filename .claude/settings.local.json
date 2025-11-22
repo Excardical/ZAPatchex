@@ -48,7 +48,8 @@
       "WebFetch(domain:cwe.mitre.org)",
       "Bash(do:*)",
       "Bash(jq:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "WebFetch(domain:cheatsheetseries.owasp.org)"
     ],
     "deny": [],
     "ask": []

@@ -146,13 +146,18 @@ const Popup = () => {
     setStatus('showing_results');
   };
 
+  const handleBackToScanner = async () => {
+    // Refresh the ZAP connection first
+    await handleConnect({ isAutoConnect: false, key: apiKey, currentHost: host });
+  };
+
   // --- Conditional Rendering Logic ---
   if (status === 'connected') {
     return <ZapScannerPanel host={host} apiKey={apiKey} onScanComplete={showResults} />;
   }
 
   if (status === 'showing_results') {
-    return <ActionsPanel host={host} apiKey={apiKey} />;
+    return <ActionsPanel host={host} apiKey={apiKey} onBackToScanner={handleBackToScanner} />;
   }
 
   // Default view: 'idle', 'loading', 'error' states show the connection form
