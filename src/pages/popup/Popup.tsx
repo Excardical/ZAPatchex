@@ -1,3 +1,4 @@
+// src/pages/popup/Popup.tsx
 import React, { useState, useEffect } from 'react';
 import Browser from 'webextension-polyfill';
 import { ActionsPanel } from './ActionsPanel';
@@ -54,7 +55,7 @@ const Popup = () => {
   const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error' | 'showing_results'>('idle');
   const [zapVersion, setZapVersion] = useState<string>('');
 
-  // Effect to load initial settings from storage on component mount
+  // Effect to load initial settings from storage AND check for active scan
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -64,6 +65,23 @@ const Popup = () => {
           return;
         }
 
+        // 1. Check for Active Scan first (Persistence)
+        const scanData = await storage.get(['activeScan']);
+        if (scanData.activeScan && scanData.activeScan.id) {
+          // RESTORE CONNECTION AUTOMATICALLY if a scan is running
+          const storedHost = (await storage.get('zapHost')).zapHost || 'http://localhost:8080';
+          const storedKeyData = await storage.get('zapApiKey');
+          const storedKey = storedKeyData.zapApiKey;
+
+          if (storedKey) {
+            setHost(storedHost);
+            setApiKey(storedKey);
+            setStatus('connected'); // Force "Connected" state so ZapScannerPanel renders and resumes scan
+            return;
+          }
+        }
+
+        // 2. Normal load
         const result = await storage.get(['zapApiKey', 'zapHost', 'rememberMe']) as StorageResult;
 
         setHost(result.zapHost || 'http://localhost:8080');
@@ -72,7 +90,7 @@ const Popup = () => {
 
         if (shouldRemember && result.zapApiKey) {
           setApiKey(result.zapApiKey);
-          // Try auto-connect if remembered
+          // Try auto-connect if remembered, but only if we didn't already connect via activeScan check
           await handleConnect({
             isAutoConnect: true,
             key: result.zapApiKey,
@@ -91,15 +109,15 @@ const Popup = () => {
     setRememberMe(isChecked);
     const storage = getBrowserStorage();
     if (storage) {
-        try {
-            await storage.set({ rememberMe: isChecked });
-            // If user unchecks the box, immediately clear the stored API key
-            if (!isChecked) {
-                await storage.remove('zapApiKey');
-            }
-        } catch(e) {
-            console.error("Error saving 'rememberMe' status", e);
+      try {
+        await storage.set({ rememberMe: isChecked });
+        // If user unchecks the box, immediately clear the stored API key
+        if (!isChecked) {
+          await storage.remove('zapApiKey');
         }
+      } catch (e) {
+        console.error("Error saving 'rememberMe' status", e);
+      }
     }
   };
 
@@ -137,8 +155,13 @@ const Popup = () => {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      setMessage(errorMessage);
-      setStatus('error');
+      if (!isAutoConnect) { // Only show error if manual connect
+        setMessage(errorMessage);
+        setStatus('error');
+      } else {
+        // If auto-connect fails, just go to idle
+        setStatus('idle');
+      }
     }
   };
 
@@ -220,4 +243,3 @@ const Popup = () => {
 };
 
 export default Popup;
-
