@@ -58,6 +58,9 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScan
   // VIEW STATE: Default is 'linear' as requested, but can toggle to dashboard
   const [viewMode, setViewMode] = useState<'linear' | 'dashboard'>('linear');
 
+  // SITE FILTER STATE
+  const [selectedSite, setSelectedSite] = useState<string>('');
+
   const refreshAlerts = async () => {
     setIsLoading(true);
     setError(null);
@@ -93,6 +96,12 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScan
     }
   };
 
+  // Filter logic
+  const filteredAlerts = groupedAlerts.filter(alert => {
+    if (!selectedSite) return true;
+    return alert.instances.some(instance => instance.url.startsWith(selectedSite));
+  });
+
   // COMMON STYLES: Enforce strict width/height matching the Scanner Panel
   const panelStyles = "font-sans w-[450px] h-[550px] bg-slate-900 text-slate-200 overflow-hidden relative";
 
@@ -113,8 +122,12 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScan
     return (
       <div className={panelStyles}>
         <DashboardPanel
-          alerts={groupedAlerts}
+          alerts={filteredAlerts}
           onViewList={() => setViewMode('linear')}
+          host={host}
+          apiKey={apiKey}
+          selectedSite={selectedSite}
+          onSiteSelect={setSelectedSite}
         />
       </div>
     );
@@ -124,7 +137,7 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScan
   return (
     <div className={`${panelStyles} flex flex-col`}>
       <VulnerabilityPanel
-        alerts={groupedAlerts}
+        alerts={filteredAlerts}
         onBackToScanner={onBackToScanner}
         onViewDashboard={() => setViewMode('dashboard')}
         host={host}

@@ -79,3 +79,122 @@ export const generateHtmlReport = async (host: string, apiKey: string): Promise<
     if (!response.ok) throw new Error('Failed to generate report');
     return await response.blob();
 };
+
+// --- 1. CONTEXT / SCOPE MANAGER ---
+export const getContextList = async (host: string, apiKey: string): Promise<string[]> => {
+    const url = new URL(`${host}/JSON/context/view/contextList/`);
+    url.searchParams.append('apikey', apiKey);
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    return data.contextList || ['Default Context'];
+};
+
+export const includeInContext = async (host: string, apiKey: string, contextName: string, targetUrl: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/context/action/includeInContext/`);
+    url.searchParams.append('apikey', apiKey);
+    url.searchParams.append('contextName', contextName);
+    // Regex to match the domain and all sub-resources
+    const regex = `${targetUrl}.*`;
+    url.searchParams.append('regex', regex);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (data.Result !== 'OK') throw new Error('Failed to update scope');
+    return 'Target added to Scope';
+};
+
+// --- 2. ZAP MODE ---
+export const setZapMode = async (host: string, apiKey: string, mode: 'safe' | 'protected' | 'standard' | 'attack'): Promise<string> => {
+    const url = new URL(`${host}/JSON/core/action/setMode/`);
+    url.searchParams.append('apikey', apiKey);
+    url.searchParams.append('mode', mode);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (data.Result !== 'OK') throw new Error('Failed to set mode');
+    return `Mode switched to ${mode}`;
+};
+
+// --- 3. GLOBAL BREAKPOINT (INTERCEPT) ---
+export const toggleGlobalBreakpoint = async (host: string, apiKey: string, enable: boolean): Promise<string> => {
+    // 'break' turns it ON, 'continue' turns it OFF
+    const action = enable ? 'break' : 'continue';
+    const url = new URL(`${host}/JSON/break/action/${action}/`);
+    url.searchParams.append('apikey', apiKey);
+
+    if (enable) {
+        // http-all intercepts both Requests and Responses
+        url.searchParams.append('type', 'http-all');
+        url.searchParams.append('state', 'true');
+    }
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (data.Result !== 'OK') throw new Error('Failed to toggle interception');
+    return enable ? 'Interception ON' : 'Interception OFF';
+};
+
+// --- 4. NEW SESSION (RESET) ---
+export const createNewSession = async (host: string, apiKey: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/core/action/newSession/`);
+    url.searchParams.append('apikey', apiKey);
+    url.searchParams.append('overwrite', 'true');
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (data.Result !== 'OK') throw new Error('Failed to reset session');
+    return 'Session Reset Successful';
+};
+
+// --- 5. SITE TREE (DISCOVERY) ---
+export const getSites = async (host: string, apiKey: string): Promise<string[]> => {
+    const url = new URL(`${host}/JSON/core/view/sites/`);
+    url.searchParams.append('apikey', apiKey);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    return data.sites || [];
+};
+
+// --- 6. SNAPSHOT (SAVE SESSION) ---
+export const saveSession = async (host: string, apiKey: string, fileName: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/core/action/snapshot/`);
+    url.searchParams.append('apikey', apiKey);
+    // Note: ZAP saves this to its local directory unless full path is given
+    url.searchParams.append('name', fileName);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (data.Result !== 'OK') throw new Error('Failed to save session');
+    return 'Session Saved';
+};
+
+// --- 7. STOP SCANS ---
+export const stopSpiderScan = async (host: string, apiKey: string, scanId: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/spider/action/stop/`);
+    url.searchParams.append('apikey', apiKey);
+    url.searchParams.append('scanId', scanId);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    return data.Result;
+};
+
+export const stopAjaxSpiderScan = async (host: string, apiKey: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/ajaxSpider/action/stop/`);
+    url.searchParams.append('apikey', apiKey);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    return data.Result;
+};
+
+export const stopActiveScan = async (host: string, apiKey: string, scanId: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/ascan/action/stop/`);
+    url.searchParams.append('apikey', apiKey);
+    url.searchParams.append('scanId', scanId);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    return data.Result;
+};
