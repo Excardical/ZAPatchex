@@ -1564,10 +1564,10 @@ chownr@^3.0.0:
   resolved "https://registry.yarnpkg.com/chownr/-/chownr-3.0.0.tgz#9855e64ecd240a9cc4267ce8a4aa5d24a1da15e4"
   integrity sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==
 
-clipboardy@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/clipboardy/-/clipboardy-5.0.0.tgz#70b16e111bdcedb782e046ba5a1901550a51225b"
-  integrity sha512-MQfKHaD09eP80Pev4qBxZLbxJK/ONnqfSYAPlCmPh+7BDboYtO/3BmB6HGzxDIT0SlTRc2tzS8lQqfcdLtZ0Kg==
+clipboardy@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/clipboardy/-/clipboardy-5.0.1.tgz#2e80c0475a04ad1177b59441f2418529a6fffce1"
+  integrity sha512-pJ5ZDWjOT593Nli4TqlRLy33KomlAPxIFntMFxXrCqJON1cGcGPT5nNFxRxJ9m4HbfrccsYve7XwXjywW6nXVw==
   dependencies:
     execa "^9.6.0"
     is-wayland "^0.1.0"
