@@ -71,14 +71,9 @@ export const checkActiveScanStatus = async (host: string, apiKey: string, scanId
     return parseInt(data.status, 10);
 };
 
-export const generateHtmlReport = async (host: string, apiKey: string): Promise<Blob> => {
-    const url = new URL(`${host}/OTHER/core/other/htmlreport/`);
-    url.searchParams.append('apikey', apiKey);
 
-    const response = await fetch(url.toString(), { method: 'GET' });
-    if (!response.ok) throw new Error('Failed to generate report');
-    return await response.blob();
-};
+// Report generation removed as per user request
+
 
 // --- 1. CONTEXT / SCOPE MANAGER ---
 export const getContextList = async (host: string, apiKey: string): Promise<string[]> => {
