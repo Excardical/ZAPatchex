@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VulnerabilityPanel, Alert, GroupedAlert } from './VulnerabilityPanel';
 import { DashboardPanel } from './DashboardPanel';
-import { generateHtmlReport } from '../../utils/zapApi';
 
 const fetchAlerts = async (host: string, apiKey: string): Promise<Alert[]> => {
   const url = new URL(`${host}/JSON/alert/view/alerts/`);
@@ -79,23 +78,6 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScan
 
   useEffect(() => { refreshAlerts(); }, [host, apiKey]);
 
-  const handleDownloadReport = async () => {
-    try {
-      const blob = await generateHtmlReport(host, apiKey);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ZAP_Report_${new Date().toISOString().slice(0, 10)}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      alert("Failed to download report. Ensure ZAP is running.");
-      console.error(e);
-    }
-  };
-
   // Filter logic
   const filteredAlerts = groupedAlerts.filter(alert => {
     if (!selectedSite) return true;
@@ -142,16 +124,9 @@ export const ActionsPanel: React.FC<{ host: string; apiKey: string; onBackToScan
         onViewDashboard={() => setViewMode('dashboard')}
         host={host}
         apiKey={apiKey}
+        selectedSite={selectedSite}
+        onSiteSelect={setSelectedSite}
       />
-
-      {/* Small floating action button for report */}
-      <button
-        onClick={handleDownloadReport}
-        className="absolute bottom-16 right-4 w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-600 border border-slate-500 z-10"
-        title="Download HTML Report"
-      >
-        <span className="text-white text-lg">⬇</span>
-      </button>
     </div>
   );
 };
