@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Component, ErrorInfo, ReactNode } from 'react';
 import { VulnerabilityPanel, GroupedAlert } from './VulnerabilityPanel';
 import { DashboardPanel } from './DashboardPanel';
 
@@ -6,6 +6,51 @@ import { DashboardPanel } from './DashboardPanel';
 const INSTANT_BATCH_SIZE = 200;  // Tiny batch for immediate user feedback (0.5s load)
 const REMAINING_BATCH_SIZE = 3000; // The rest of the limit
 const MAX_INSTANCES_PER_ALERT = 80;
+
+// --- 1. NEW: Error Boundary Component ---
+// This catches crashes in the child components to prevent the "white square"
+class SafeView extends Component<{ children: ReactNode, onReset: () => void }, { hasError: boolean }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Critical Error in ActionsPanel:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-900 text-slate-200 text-center">
+          <div className="text-red-400 mb-2">
+            <svg className="w-10 h-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 className="font-bold text-lg">Unable to Retrieve Alerts</h3>
+          </div>
+          <p className="text-sm text-slate-400 mb-4">
+            The data for this site appears to be malformed or corrupted.
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false });
+              this.props.onReset();
+            }}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white text-sm transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface ActionsPanelProps {
   host: string;
@@ -61,12 +106,11 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
           countUrl.searchParams.append('apikey', apiKey);
           const countRes = await fetch(countUrl.toString(), { headers: { 'X-ZAP-API-Key': apiKey } });
           if (countRes.ok) {
-            const data = await countRes.json();
+            await countRes.json();
           }
         } catch (e) { console.warn(e); }
 
-        // 2. INSTANT FETCH (First 50 items)
-        // This makes the UI appear almost immediately
+        // 2. INSTANT FETCH (First small batch)
         await fetchAndProcessBatch(0, INSTANT_BATCH_SIZE);
 
         // Update Parent & UI immediately after small batch
@@ -77,7 +121,6 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
         }
 
         // 3. BACKGROUND FETCH (The rest)
-        // Now fetch the big chunk (up to 2500)
         await fetchAndProcessBatch(INSTANT_BATCH_SIZE, REMAINING_BATCH_SIZE);
 
         // Final Update
@@ -102,7 +145,7 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     loadAlerts();
 
     return () => { isMounted.current = false; };
-  }, [host, apiKey, hasLoaded]); // Dependency ensures we don't run if already loaded
+  }, [host, apiKey, hasLoaded]);
 
   // --- HELPER: Fetch & Process ---
   const fetchAndProcessBatch = async (start: number, count: number) => {
@@ -148,17 +191,25 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     });
   };
 
-  // MEMOIZATION
+  // --- 2. FIXED: Safe Filtering Logic ---
+  // Added checks to prevent crashes if alert data is malformed
   const filteredAlerts = useMemo(() => {
     return cachedAlerts.filter(alert => {
+      // Safety Check: Skip if alert or instances are missing
+      if (!alert || !Array.isArray(alert.instances)) return false;
+
       if (!selectedSite) return true;
-      return alert.instances.some(instance => instance.url.startsWith(selectedSite));
+
+      // Safety Check: Ensure 'instance' and 'url' exist before checking startsWith
+      return alert.instances.some(instance =>
+        instance && instance.url && instance.url.startsWith(selectedSite)
+      );
     });
   }, [cachedAlerts, selectedSite]);
 
   const panelStyles = "font-sans w-[450px] h-[550px] bg-slate-900 text-slate-200 overflow-hidden relative";
 
-  // Initial Loading (Only shows for the first 0.5 seconds)
+  // Initial Loading
   if (isLoading && cachedAlerts.length === 0) {
     return (
       <div className={`${panelStyles} flex flex-col items-center justify-center`}>
@@ -181,28 +232,31 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     );
   }
 
+  // --- 3. WRAP: Use SafeView (Error Boundary) ---
   return (
-    <div className={`${panelStyles} flex flex-col`}>
-      {viewMode === 'dashboard' ? (
-        <DashboardPanel
-          alerts={filteredAlerts}
-          onViewList={() => setViewMode('linear')}
-          host={host}
-          apiKey={apiKey}
-          selectedSite={selectedSite}
-          onSiteSelect={setSelectedSite}
-        />
-      ) : (
-        <VulnerabilityPanel
-          alerts={filteredAlerts}
-          onBackToScanner={onBackToScanner}
-          onViewDashboard={() => setViewMode('dashboard')}
-          host={host}
-          apiKey={apiKey}
-          selectedSite={selectedSite}
-          onSiteSelect={setSelectedSite}
-        />
-      )}
-    </div>
+    <SafeView onReset={() => setSelectedSite('')}>
+      <div className={`${panelStyles} flex flex-col`}>
+        {viewMode === 'dashboard' ? (
+          <DashboardPanel
+            alerts={filteredAlerts}
+            onViewList={() => setViewMode('linear')}
+            host={host}
+            apiKey={apiKey}
+            selectedSite={selectedSite}
+            onSiteSelect={setSelectedSite}
+          />
+        ) : (
+          <VulnerabilityPanel
+            alerts={filteredAlerts}
+            onBackToScanner={onBackToScanner}
+            onViewDashboard={() => setViewMode('dashboard')}
+            host={host}
+            apiKey={apiKey}
+            selectedSite={selectedSite}
+            onSiteSelect={setSelectedSite}
+          />
+        )}
+      </div>
+    </SafeView>
   );
 };
