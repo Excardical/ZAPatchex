@@ -12,16 +12,17 @@ import {
   stopActiveScan,
   createNewSession,
   saveSession,
-  shutdownZAP
+  shutdownZAP,
+  getZapHomePath
 } from '../../utils/zapApi';
 
 interface ZapScannerPanelProps {
   host: string;
   apiKey: string;
-  onScanStart?: () => void;    // NEW: Callback when scan starts
+  onScanStart?: () => void;
   onScanComplete: () => void;
   onViewReports: () => void;
-  onDisconnect?: () => void; // Added for logout functionality
+  onDisconnect?: () => void;
 }
 
 export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, onScanStart, onScanComplete, onViewReports, onDisconnect }) => {
@@ -34,6 +35,9 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // State for saved file path
+  const [savedPath, setSavedPath] = useState<string | null>(null);
 
   // Modal State for Saving Session
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -67,7 +71,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
           setIsLoading(true);
           setScanStatusMessage(`Resuming ${type}...`);
         } else {
-          // Auto-fill current tab URL
           const tabs = await Browser.tabs.query({ active: true, currentWindow: true });
           if (tabs[0]?.url?.startsWith('http')) setTargetUrl(tabs[0].url);
         }
@@ -138,18 +141,17 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       setError("Please enter a target URL.");
       return;
     }
-
-    // NEW: Notify parent that scan started so it can clear old results
     if (onScanStart) onScanStart();
 
     setError(null);
     setSuccessMsg(null);
+    setSavedPath(null);
     setIsLoading(true);
     setScanProgress(0);
 
     try {
       let id = '';
-      let type: 'spider' | 'ajaxSpider' | 'active' = 'spider'; // Default
+      let type: 'spider' | 'ajaxSpider' | 'active' = 'spider';
 
       if (selectedMode === 'standard') {
         if (useAjaxSpider) {
@@ -199,9 +201,9 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       try {
         await createNewSession(host, apiKey);
         setSuccessMsg("Session reset successfully.");
+        setSavedPath(null);
         setError(null);
         setScanId(null);
-        // Also notify parent to clear results view
         if (onScanStart) onScanStart();
       } catch (e: any) {
         setError(e.message || "Failed to reset session");
@@ -221,7 +223,23 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     }
     try {
       await saveSession(host, apiKey, saveFilename);
+
+      let fullPath = '';
+      try {
+        const homePath = await getZapHomePath(host, apiKey);
+        // Detect if Windows-style backslashes are used
+        const isWindows = homePath.includes('\\');
+        const separator = isWindows ? '\\' : '/';
+        // Remove trailing slash if present to avoid double slashes
+        const cleanHomePath = homePath.replace(/[/\\]$/, '');
+        // Build consistent path: HOME + / + session + / + filename
+        fullPath = `${cleanHomePath}${separator}session${separator}${saveFilename}`;
+      } catch (e) {
+        console.warn("Could not fetch home path", e);
+      }
+
       setSuccessMsg(`Session saved as '${saveFilename}'`);
+      setSavedPath(fullPath || "Saved in ZAP default directory");
       setError(null);
       setShowSaveModal(false);
     } catch (e: any) {
@@ -238,6 +256,12 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         console.error("Shutdown error:", e);
         if (onDisconnect) onDisconnect();
       }
+    }
+  };
+
+  const handleCopyPath = () => {
+    if (savedPath) {
+      navigator.clipboard.writeText(savedPath);
     }
   };
 
@@ -281,7 +305,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
   );
 
   return (
-    <div className="font-sans w-[450px] min-h-[600px] bg-slate-900 text-slate-200 p-5 flex flex-col relative overflow-hidden">
+    <div className="font-sans w-[450px] h-[600px] bg-slate-900 text-slate-200 p-5 flex flex-col relative overflow-hidden">
       <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
 
       {/* --- SAVE MODAL --- */}
@@ -289,7 +313,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-slate-800 p-5 rounded-lg border border-slate-600 shadow-2xl w-3/4">
             <h3 className="text-md font-bold text-white mb-3">Save Session</h3>
-            <p className="text-xs text-slate-400 mb-2">Enter a filename for the ZAP snapshot:</p>
+            <p className="text-xs text-slate-400 mb-2">Enter a filename for the ZAP session:</p>
             <input
               type="text"
               className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white mb-4 focus:border-cyan-500 outline-none"
@@ -318,11 +342,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
 
       {/* --- HEADER --- */}
       <header className="flex flex-col items-center mb-6 relative z-10">
-
-        {/* Top Right Controls (Fixed Side-by-Side Layout) */}
         <div className="absolute top-2 right-2 flex flex-row items-center gap-3 z-50 pointer-events-auto">
-
-          {/* Disconnect Button (Yellow/Amber, New Thunder Icon) */}
           {onDisconnect && (
             <button
               onClick={onDisconnect}
@@ -334,8 +354,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </svg>
             </button>
           )}
-
-          {/* Power Off Button (Red, Power Icon) */}
           <button
             onClick={handleShutdown}
             className="p-1.5 rounded-full bg-red-900/20 hover:bg-red-600 text-red-500 hover:text-white transition-colors border border-red-900/50 shadow-sm"
@@ -361,15 +379,20 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         </p>
       </header>
 
-      <main className="flex-grow flex flex-col relative z-10">
+      {/* FIXED: Hiding Scrollbar while allowing scroll */}
+      {/* 1. overflow-y-auto: Allows scrolling if content overflows */}
+      {/* 2. [&::-webkit-scrollbar]:hidden: Hides scrollbar in Chrome/Safari (Tailwind syntax) */}
+      {/* 3. style={{ scrollbarWidth: 'none' }}: Hides scrollbar in Firefox */}
+      <main
+        className="flex-grow flex flex-col relative z-10 overflow-y-auto px-1 [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: 'none' }}
+      >
         {isLoading ? (
-          // LOADING STATE VIEW
           <div className="flex-grow flex flex-col justify-center">
             {renderLoadingState()}
           </div>
         ) : (
-          // CONFIGURATION VIEW
-          <div className="space-y-5 animate-fade-in-up">
+          <div className="space-y-5 animate-fade-in-up pb-4">
 
             {/* 1. Target Input */}
             <div className="space-y-1">
@@ -388,11 +411,10 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </div>
             </div>
 
-            {/* 2. Mode Selection Cards */}
+            {/* 2. Mode Selection */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase ml-1">Scan Mode</label>
               <div className="grid grid-cols-2 gap-3">
-                {/* Standard Mode Card */}
                 <div
                   onClick={() => setSelectedMode('standard')}
                   className={`cursor-pointer p-3 rounded-lg border transition-all duration-200 relative overflow-hidden group ${selectedMode === 'standard'
@@ -409,7 +431,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
                   </p>
                 </div>
 
-                {/* Attack Mode Card */}
                 <div
                   onClick={() => setSelectedMode('attack')}
                   className={`cursor-pointer p-3 rounded-lg border transition-all duration-200 relative overflow-hidden group ${selectedMode === 'attack'
@@ -428,7 +449,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </div>
             </div>
 
-            {/* 3. Options (AJAX) */}
+            {/* 3. Options */}
             <div className="flex items-center space-x-2 pl-1">
               <input
                 type="checkbox"
@@ -453,7 +474,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               {selectedMode === 'attack' ? 'LAUNCH ATTACK' : 'START SCAN'}
             </button>
 
-            {/* 5. NEW: Session Controls (Reset & Save) */}
+            {/* 5. Session Controls */}
             <div className="flex gap-3">
               <button
                 onClick={handleNewSession}
@@ -478,16 +499,35 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
             )}
 
             {successMsg && (
-              <div className="p-3 rounded bg-green-900/20 border border-green-500/50 text-green-200 text-xs text-center animate-fade-in">
-                {successMsg}
+              <div className="p-3 rounded bg-green-900/20 border border-green-500/50 text-green-200 text-xs text-center animate-fade-in break-words">
+                <p className="font-bold mb-1">{successMsg}</p>
+                {savedPath && (
+                  <div className="mt-2 text-left">
+                    <p className="text-[10px] text-green-300/70 mb-1 uppercase tracking-wide">Saved Location:</p>
+                    <div className="flex items-center gap-2 bg-black/30 p-2 rounded border border-green-500/30">
+                      <code className="flex-1 text-[10px] font-mono text-green-100 overflow-x-auto whitespace-nowrap scrollbar-hide select-all">
+                        {savedPath}
+                      </code>
+                      <button
+                        onClick={handleCopyPath}
+                        className="p-1.5 hover:bg-green-500/20 rounded text-green-400 hover:text-green-200 transition-colors"
+                        title="Copy path to clipboard"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[9px] text-green-400/50 italic">
+                      Paste this path into your File Explorer to open.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
       </main>
 
-      <footer className="mt-auto pt-4 text-center space-y-2">
-        {/* View Reports Button */}
+      <footer className="mt-auto pt-4 text-center space-y-2 z-20 bg-slate-900/95">
         <div>
           <button
             onClick={onViewReports}

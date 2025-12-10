@@ -137,14 +137,23 @@ export const getSites = async (host: string, apiKey: string): Promise<string[]> 
 };
 
 export const saveSession = async (host: string, apiKey: string, fileName: string): Promise<string> => {
-    const url = new URL(`${host}/JSON/core/action/snapshot/`);
+    const url = new URL(`${host}/JSON/core/action/saveSession/`);
     url.searchParams.append('apikey', apiKey);
     url.searchParams.append('name', fileName);
+    url.searchParams.append('overwrite', 'true');
 
     const response = await fetch(url.toString());
     const data = await response.json();
     if (data.Result !== 'OK') throw new Error('Failed to save session');
     return 'Session Saved';
+};
+
+export const getZapHomePath = async (host: string, apiKey: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/core/view/zapHomePath/`);
+    url.searchParams.append('apikey', apiKey);
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    return data.zapHomePath || '';
 };
 
 export const stopSpiderScan = async (host: string, apiKey: string, scanId: string): Promise<string> => {
@@ -173,7 +182,6 @@ export const stopActiveScan = async (host: string, apiKey: string, scanId: strin
     return data.Result;
 };
 
-// --- NEW: SHUTDOWN ZAP ---
 export const shutdownZAP = async (host: string, apiKey: string): Promise<string> => {
     const url = new URL(`${host}/JSON/core/action/shutdown/`);
     url.searchParams.append('apikey', apiKey);

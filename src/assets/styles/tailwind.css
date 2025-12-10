@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-    --animate-spin-slow: spin 20s linear infinite;
+  --animate-spin-slow: spin 20s linear infinite;
 
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
     }
+  }
 }
 
 /* Custom Thin Scrollbar for Webkit browsers */
@@ -21,10 +21,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155; /* slate-700 */
+  background: #334155;
+  /* slate-700 */
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569; /* slate-600 */
+  background: #475569;
+  /* slate-600 */
 }
