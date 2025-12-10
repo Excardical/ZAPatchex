@@ -27,7 +27,7 @@ class SafeView extends Component<{ children: ReactNode, onReset: () => void }, {
       return (
         <div
           className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-900 text-slate-200 text-center overflow-hidden"
-          style={{ scrollbarWidth: 'none' }} // Hidden scrollbar
+          style={{ scrollbarWidth: 'none' }}
         >
           <div className="text-red-400 mb-2">
             <svg className="w-10 h-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -218,14 +218,38 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     );
   }
 
+  // --- BEAUTIFIED EMPTY STATE ---
   if (cachedAlerts.length === 0 && !isLoading && !isFetchingMore) {
     return (
       <div
-        className={`${panelStyles} flex flex-col items-center justify-center p-4`}
+        className={`${panelStyles} flex flex-col items-center justify-center p-6 relative`}
         style={{ scrollbarWidth: 'none' }}
       >
-        <p className="text-slate-400 mb-4">No alerts found.</p>
-        <button onClick={onBackToScanner} className="p-2 bg-slate-700 rounded text-white hover:bg-slate-600">Back</button>
+        {/* Background Decorative Elements */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 text-center space-y-4">
+          <div className="w-20 h-20 mx-auto bg-slate-800 rounded-2xl flex items-center justify-center shadow-2xl border border-slate-700/50 mb-2 group">
+            {/* Shield Check Icon */}
+            <svg className="w-10 h-10 text-slate-500 group-hover:text-green-500 transition-colors duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-bold text-white mb-1 merriweather-font">All Systems Clean</h3>
+            <p className="text-xs text-slate-400 max-w-[220px] mx-auto leading-relaxed">
+              No vulnerabilities have been detected in the current session.
+            </p>
+          </div>
+
+          <button
+            onClick={onBackToScanner}
+            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border border-slate-600 text-slate-200 text-xs font-bold shadow-lg transition-all active:scale-95 hover:text-white"
+          >
+            Back to Scanner
+          </button>
+        </div>
       </div>
     );
   }
