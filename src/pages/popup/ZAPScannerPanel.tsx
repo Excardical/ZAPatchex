@@ -25,6 +25,66 @@ interface ZapScannerPanelProps {
   onDisconnect?: () => void;
 }
 
+// --- NEW: Custom Confirmation Modal Component ---
+interface ConfirmModalProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  type?: 'danger' | 'warning' | 'info';
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const ConfirmationModal: React.FC<ConfirmModalProps> = ({ isOpen, title, message, type = 'warning', onConfirm, onCancel }) => {
+  if (!isOpen) return null;
+
+  const getColors = () => {
+    switch (type) {
+      case 'danger': return { btn: 'bg-red-600 hover:bg-red-700', icon: 'text-red-500', border: 'border-red-500/30' };
+      case 'info': return { btn: 'bg-cyan-600 hover:bg-cyan-700', icon: 'text-cyan-500', border: 'border-cyan-500/30' };
+      default: return { btn: 'bg-yellow-600 hover:bg-yellow-700', icon: 'text-yellow-500', border: 'border-yellow-500/30' };
+    }
+  };
+
+  const colors = getColors();
+
+  return (
+    <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-fade-in p-6">
+      <div className={`w-full max-w-sm bg-slate-800 rounded-xl shadow-2xl border ${colors.border} overflow-hidden transform transition-all scale-100`}>
+        <div className="p-5 text-center">
+          <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-slate-700/50 mb-4 ${colors.icon}`}>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg leading-6 font-bold text-white mb-2">{title}</h3>
+          <div className="mt-2">
+            <p className="text-sm text-slate-300 whitespace-pre-wrap">{message}</p>
+          </div>
+        </div>
+
+        {/* FIXED: Uniform Button Sizing & Layout */}
+        <div className="bg-slate-900/50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 items-center justify-center">
+          <button
+            type="button"
+            className={`inline-flex justify-center items-center w-full sm:w-auto rounded-lg border border-transparent shadow-sm px-4 py-2 text-sm font-bold text-white focus:outline-none transition-all min-w-[100px] ${colors.btn}`}
+            onClick={onConfirm}
+          >
+            Confirm
+          </button>
+          <button
+            type="button"
+            className="inline-flex justify-center items-center w-full sm:w-auto rounded-lg border border-slate-600 shadow-sm px-4 py-2 bg-slate-800 text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-white focus:outline-none transition-all min-w-[100px]"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, onScanStart, onScanComplete, onViewReports, onDisconnect }) => {
   const [targetUrl, setTargetUrl] = useState<string>('');
   const [useAjaxSpider, setUseAjaxSpider] = useState<boolean>(false);
@@ -36,17 +96,26 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // State for saved file path
   const [savedPath, setSavedPath] = useState<string | null>(null);
-
-  // Modal State for Saving Session
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveFilename, setSaveFilename] = useState('');
 
-  // Manual Mode Selection State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning',
+    onConfirm: () => { },
+  });
+
   const [selectedMode, setSelectedMode] = useState<'standard' | 'attack'>('standard');
 
-  // Load Fonts
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -57,7 +126,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     return () => { document.head.removeChild(style); };
   }, []);
 
-  // Restore State
   useEffect(() => {
     const restoreState = async () => {
       try {
@@ -79,7 +147,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     restoreState();
   }, []);
 
-  // Save State
   useEffect(() => {
     if (scanId && scanType) {
       Browser.storage.local.set({
@@ -97,7 +164,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     }
   }, [scanId, scanType, targetUrl, useAjaxSpider, isLoading, host, apiKey]);
 
-  // Monitor Scan
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
     if (scanId) {
@@ -134,7 +200,9 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     return () => { if (intervalId) clearInterval(intervalId); };
   }, [scanId, host, apiKey, scanType, onScanComplete]);
 
-  // --- HANDLERS ---
+  const closeConfirmModal = () => {
+    setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   const handleStartScan = async () => {
     if (!targetUrl) {
@@ -194,21 +262,26 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     } catch (e) { console.error(e); }
   };
 
-  // --- NEW HANDLERS ---
-
-  const handleNewSession = async () => {
-    if (confirm("Are you sure you want to reset the session? This will clear all current scan data.")) {
-      try {
-        await createNewSession(host, apiKey);
-        setSuccessMsg("Session reset successfully.");
-        setSavedPath(null);
-        setError(null);
-        setScanId(null);
-        if (onScanStart) onScanStart();
-      } catch (e: any) {
-        setError(e.message || "Failed to reset session");
+  const handleNewSession = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Reset Session?',
+      message: 'Are you sure you want to reset the session?\nThis will clear all current scan data.',
+      type: 'warning',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await createNewSession(host, apiKey);
+          setSuccessMsg("Session reset successfully.");
+          setSavedPath(null);
+          setError(null);
+          setScanId(null);
+          if (onScanStart) onScanStart();
+        } catch (e: any) {
+          setError(e.message || "Failed to reset session");
+        }
       }
-    }
+    });
   };
 
   const handleSaveSessionClick = () => {
@@ -218,7 +291,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
 
   const handleConfirmSave = async () => {
     if (!saveFilename) {
-      alert("Please enter a filename.");
+      setError("Please enter a filename.");
       return;
     }
     try {
@@ -227,12 +300,9 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       let fullPath = '';
       try {
         const homePath = await getZapHomePath(host, apiKey);
-        // Detect if Windows-style backslashes are used
         const isWindows = homePath.includes('\\');
         const separator = isWindows ? '\\' : '/';
-        // Remove trailing slash if present to avoid double slashes
         const cleanHomePath = homePath.replace(/[/\\]$/, '');
-        // Build consistent path: HOME + / + session + / + filename
         fullPath = `${cleanHomePath}${separator}session${separator}${saveFilename}`;
       } catch (e) {
         console.warn("Could not fetch home path", e);
@@ -243,20 +313,27 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       setError(null);
       setShowSaveModal(false);
     } catch (e: any) {
-      alert("Error saving session: " + e.message);
+      setError("Error saving session: " + e.message);
     }
   };
 
-  const handleShutdown = async () => {
-    if (confirm("WARNING: This will shutdown the ZAP application on your machine.\n\nYou will be logged out.")) {
-      try {
-        await shutdownZAP(host, apiKey);
-        if (onDisconnect) onDisconnect();
-      } catch (e: any) {
-        console.error("Shutdown error:", e);
-        if (onDisconnect) onDisconnect();
+  const handleShutdown = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Power Off ZAP?',
+      message: 'WARNING: This will shutdown the ZAP application on your machine.\n\nYou will be logged out immediately.',
+      type: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await shutdownZAP(host, apiKey);
+          if (onDisconnect) onDisconnect();
+        } catch (e: any) {
+          console.error("Shutdown error:", e);
+          if (onDisconnect) onDisconnect();
+        }
       }
-    }
+    });
   };
 
   const handleCopyPath = () => {
@@ -264,8 +341,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       navigator.clipboard.writeText(savedPath);
     }
   };
-
-  // --- RENDER HELPERS ---
 
   const renderLoadingState = () => (
     <div className="mt-4 p-4 bg-slate-800/80 rounded border border-cyan-500/30 text-center shadow-lg animate-fade-in relative overflow-hidden">
@@ -308,9 +383,17 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     <div className="font-sans w-[450px] h-[600px] bg-slate-900 text-slate-200 p-5 flex flex-col relative overflow-hidden">
       <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
 
-      {/* --- SAVE MODAL --- */}
+      <ConfirmationModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        type={confirmConfig.type}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={closeConfirmModal}
+      />
+
       {showSaveModal && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-slate-800 p-5 rounded-lg border border-slate-600 shadow-2xl w-3/4">
             <h3 className="text-md font-bold text-white mb-3">Save Session</h3>
             <p className="text-xs text-slate-400 mb-2">Enter a filename for the ZAP session:</p>
@@ -340,7 +423,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         </div>
       )}
 
-      {/* --- HEADER --- */}
       <header className="flex flex-col items-center mb-6 relative z-10">
         <div className="absolute top-2 right-2 flex flex-row items-center gap-3 z-50 pointer-events-auto">
           {onDisconnect && (
@@ -379,10 +461,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         </p>
       </header>
 
-      {/* FIXED: Hiding Scrollbar while allowing scroll */}
-      {/* 1. overflow-y-auto: Allows scrolling if content overflows */}
-      {/* 2. [&::-webkit-scrollbar]:hidden: Hides scrollbar in Chrome/Safari (Tailwind syntax) */}
-      {/* 3. style={{ scrollbarWidth: 'none' }}: Hides scrollbar in Firefox */}
       <main
         className="flex-grow flex flex-col relative z-10 overflow-y-auto px-1 [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: 'none' }}
@@ -393,8 +471,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
           </div>
         ) : (
           <div className="space-y-5 animate-fade-in-up pb-4">
-
-            {/* 1. Target Input */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-400 uppercase ml-1">Target Scope</label>
               <div className="relative group">
@@ -411,7 +487,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </div>
             </div>
 
-            {/* 2. Mode Selection */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase ml-1">Scan Mode</label>
               <div className="grid grid-cols-2 gap-3">
@@ -449,7 +524,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </div>
             </div>
 
-            {/* 3. Options */}
             <div className="flex items-center space-x-2 pl-1">
               <input
                 type="checkbox"
@@ -463,7 +537,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </label>
             </div>
 
-            {/* 4. Start Button */}
             <button
               onClick={handleStartScan}
               className={`w-full py-3.5 rounded-lg text-sm font-bold text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 ${selectedMode === 'attack'
@@ -474,7 +547,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               {selectedMode === 'attack' ? 'LAUNCH ATTACK' : 'START SCAN'}
             </button>
 
-            {/* 5. Session Controls */}
             <div className="flex gap-3">
               <button
                 onClick={handleNewSession}
