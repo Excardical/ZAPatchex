@@ -3,12 +3,11 @@ import { VulnerabilityPanel, GroupedAlert } from './VulnerabilityPanel';
 import { DashboardPanel } from './DashboardPanel';
 
 // --- CONFIGURATION ---
-const INSTANT_BATCH_SIZE = 200;  // Tiny batch for immediate user feedback (0.5s load)
-const REMAINING_BATCH_SIZE = 3000; // The rest of the limit
+const INSTANT_BATCH_SIZE = 200;
+const REMAINING_BATCH_SIZE = 3000;
 const MAX_INSTANCES_PER_ALERT = 80;
 
 // --- 1. NEW: Error Boundary Component ---
-// This catches crashes in the child components to prevent the "white square"
 class SafeView extends Component<{ children: ReactNode, onReset: () => void }, { hasError: boolean }> {
   constructor(props: any) {
     super(props);
@@ -26,7 +25,10 @@ class SafeView extends Component<{ children: ReactNode, onReset: () => void }, {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-900 text-slate-200 text-center">
+        <div
+          className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-900 text-slate-200 text-center overflow-hidden"
+          style={{ scrollbarWidth: 'none' }} // Hidden scrollbar
+        >
           <div className="text-red-400 mb-2">
             <svg className="w-10 h-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -75,7 +77,6 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
   const [selectedSite, setSelectedSite] = useState<string>('');
 
   const isMounted = useRef(false);
-  // We use a local Ref to aggregate data before sending it up to parent to reduce re-renders
   const alertsMapRef = useRef<Map<string, GroupedAlert>>(new Map());
 
   // --- Initialize Map from Cache ---
@@ -88,7 +89,6 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
   useEffect(() => {
     isMounted.current = true;
 
-    // IF WE ALREADY HAVE DATA, DO NOT FETCH AGAIN
     if (hasLoaded) {
       setIsLoading(false);
       return;
@@ -97,10 +97,9 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     const loadAlerts = async () => {
       setIsLoading(true);
       setError(null);
-      alertsMapRef.current.clear(); // Start fresh
+      alertsMapRef.current.clear();
 
       try {
-        // 1. Get Total Count (Optional, for UI stats)
         try {
           const countUrl = new URL(`${host}/JSON/core/view/numberOfAlerts/`);
           countUrl.searchParams.append('apikey', apiKey);
@@ -110,23 +109,19 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
           }
         } catch (e) { console.warn(e); }
 
-        // 2. INSTANT FETCH (First small batch)
         await fetchAndProcessBatch(0, INSTANT_BATCH_SIZE);
 
-        // Update Parent & UI immediately after small batch
         if (isMounted.current) {
           onUpdateAlerts(Array.from(alertsMapRef.current.values()));
-          setIsLoading(false); // Spinner stops here!
-          setIsFetchingMore(true); // Switch to "Streaming" indicator
+          setIsLoading(false);
+          setIsFetchingMore(true);
         }
 
-        // 3. BACKGROUND FETCH (The rest)
         await fetchAndProcessBatch(INSTANT_BATCH_SIZE, REMAINING_BATCH_SIZE);
 
-        // Final Update
         if (isMounted.current) {
           onUpdateAlerts(Array.from(alertsMapRef.current.values()));
-          onLoadComplete(); // Mark as fully loaded so we don't fetch again
+          onLoadComplete();
         }
 
       } catch (err) {
@@ -147,7 +142,6 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     return () => { isMounted.current = false; };
   }, [host, apiKey, hasLoaded]);
 
-  // --- HELPER: Fetch & Process ---
   const fetchAndProcessBatch = async (start: number, count: number) => {
     const url = new URL(`${host}/JSON/alert/view/alerts/`);
     url.searchParams.append('start', start.toString());
@@ -160,7 +154,6 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     const json = await res.json();
     const batch = json.alerts || [];
 
-    // Aggregate
     batch.forEach((alert: any) => {
       const key = alert.alert || alert.name || 'Unknown Alert';
 
@@ -180,7 +173,6 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
 
       const group = alertsMapRef.current.get(key)!;
 
-      // CAP INSTANCES
       if (group.instances.length < MAX_INSTANCES_PER_ALERT) {
         group.instances.push({
           url: alert.url,
@@ -191,16 +183,10 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
     });
   };
 
-  // --- 2. FIXED: Safe Filtering Logic ---
-  // Added checks to prevent crashes if alert data is malformed
   const filteredAlerts = useMemo(() => {
     return cachedAlerts.filter(alert => {
-      // Safety Check: Skip if alert or instances are missing
       if (!alert || !Array.isArray(alert.instances)) return false;
-
       if (!selectedSite) return true;
-
-      // Safety Check: Ensure 'instance' and 'url' exist before checking startsWith
       return alert.instances.some(instance =>
         instance && instance.url && instance.url.startsWith(selectedSite)
       );
@@ -209,10 +195,12 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
 
   const panelStyles = "font-sans w-[450px] h-[550px] bg-slate-900 text-slate-200 overflow-hidden relative";
 
-  // Initial Loading
   if (isLoading && cachedAlerts.length === 0) {
     return (
-      <div className={`${panelStyles} flex flex-col items-center justify-center`}>
+      <div
+        className={`${panelStyles} flex flex-col items-center justify-center`}
+        style={{ scrollbarWidth: 'none' }}
+      >
         <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="text-slate-400">Fetching results...</p>
       </div>
@@ -220,22 +208,34 @@ export const ActionsPanel: React.FC<ActionsPanelProps> = ({
   }
 
   if (error && cachedAlerts.length === 0) {
-    return <div className={`${panelStyles} flex items-center justify-center`}><p className="text-red-400 p-4 text-center">Error loading results: <br />{error}</p></div>;
+    return (
+      <div
+        className={`${panelStyles} flex items-center justify-center`}
+        style={{ scrollbarWidth: 'none' }}
+      >
+        <p className="text-red-400 p-4 text-center">Error loading results: <br />{error}</p>
+      </div>
+    );
   }
 
   if (cachedAlerts.length === 0 && !isLoading && !isFetchingMore) {
     return (
-      <div className={`${panelStyles} flex flex-col items-center justify-center p-4`}>
+      <div
+        className={`${panelStyles} flex flex-col items-center justify-center p-4`}
+        style={{ scrollbarWidth: 'none' }}
+      >
         <p className="text-slate-400 mb-4">No alerts found.</p>
         <button onClick={onBackToScanner} className="p-2 bg-slate-700 rounded text-white hover:bg-slate-600">Back</button>
       </div>
     );
   }
 
-  // --- 3. WRAP: Use SafeView (Error Boundary) ---
   return (
     <SafeView onReset={() => setSelectedSite('')}>
-      <div className={`${panelStyles} flex flex-col`}>
+      <div
+        className={`${panelStyles} flex flex-col`}
+        style={{ scrollbarWidth: 'none' }}
+      >
         {viewMode === 'dashboard' ? (
           <DashboardPanel
             alerts={filteredAlerts}
