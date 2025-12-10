@@ -88,21 +88,23 @@ const Popup = () => {
 
       {view === 'scanner' && (
         <div className="relative h-full">
-          <button
-            onClick={handleLogout}
-            className="absolute top-3 right-3 z-50 p-2 text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-800"
-            title="Disconnect"
-          >
-            <img src={chrome.runtime.getURL('Icons/refresh-arrow_icon-icons.com_73442.png')} className="w-4 h-4 opacity-70" />
-          </button>
 
           <ZAPScannerPanel
             host={host}
             apiKey={apiKey}
-            // If scan completes or user clicks "View Reports", we go to results
-            // Note: If you want to CLEAR data on a fresh scan, do it inside ZAPScannerPanel before calling this
-            onScanComplete={() => setView('results')}
+            // NEW: Clear data when a new scan starts
+            onScanStart={() => {
+              setPersistedAlerts([]);
+              setHasLoadedOnce(false);
+            }}
+            // UPDATED: Force refresh when scan finishes automatically
+            onScanComplete={() => {
+              setHasLoadedOnce(false);
+              setView('results');
+            }}
             onViewReports={() => setView('results')}
+            // PASSED DOWN: Pass the logout handler to the panel
+            onDisconnect={handleLogout}
           />
         </div>
       )}

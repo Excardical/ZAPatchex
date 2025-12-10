@@ -25,8 +25,6 @@ export const startAjaxSpiderScan = async (host: string, apiKey: string, targetUr
 
     const response = await fetch(url.toString(), { method: 'GET' });
     const data = await response.json();
-    // AJAX Spider returns "OK" usually, status is tracked differently, 
-    // but we return a dummy ID "ajax" to track state consistent with standard spider
     if (data.Result !== 'OK') throw new Error('AJAX Spider start failed');
     return 'ajax_scan_running';
 };
@@ -45,7 +43,6 @@ export const checkAjaxSpiderStatus = async (host: string, apiKey: string): Promi
     url.searchParams.append('apikey', apiKey);
     const response = await fetch(url.toString());
     const data = await response.json();
-    // Returns "running" or "stopped"
     return data.status;
 };
 
@@ -71,11 +68,6 @@ export const checkActiveScanStatus = async (host: string, apiKey: string, scanId
     return parseInt(data.status, 10);
 };
 
-
-// Report generation removed as per user request
-
-
-// --- 1. CONTEXT / SCOPE MANAGER ---
 export const getContextList = async (host: string, apiKey: string): Promise<string[]> => {
     const url = new URL(`${host}/JSON/context/view/contextList/`);
     url.searchParams.append('apikey', apiKey);
@@ -88,7 +80,6 @@ export const includeInContext = async (host: string, apiKey: string, contextName
     const url = new URL(`${host}/JSON/context/action/includeInContext/`);
     url.searchParams.append('apikey', apiKey);
     url.searchParams.append('contextName', contextName);
-    // Regex to match the domain and all sub-resources
     const regex = `${targetUrl}.*`;
     url.searchParams.append('regex', regex);
 
@@ -98,7 +89,6 @@ export const includeInContext = async (host: string, apiKey: string, contextName
     return 'Target added to Scope';
 };
 
-// --- 2. ZAP MODE ---
 export const setZapMode = async (host: string, apiKey: string, mode: 'safe' | 'protected' | 'standard' | 'attack'): Promise<string> => {
     const url = new URL(`${host}/JSON/core/action/setMode/`);
     url.searchParams.append('apikey', apiKey);
@@ -110,15 +100,12 @@ export const setZapMode = async (host: string, apiKey: string, mode: 'safe' | 'p
     return `Mode switched to ${mode}`;
 };
 
-// --- 3. GLOBAL BREAKPOINT (INTERCEPT) ---
 export const toggleGlobalBreakpoint = async (host: string, apiKey: string, enable: boolean): Promise<string> => {
-    // 'break' turns it ON, 'continue' turns it OFF
     const action = enable ? 'break' : 'continue';
     const url = new URL(`${host}/JSON/break/action/${action}/`);
     url.searchParams.append('apikey', apiKey);
 
     if (enable) {
-        // http-all intercepts both Requests and Responses
         url.searchParams.append('type', 'http-all');
         url.searchParams.append('state', 'true');
     }
@@ -129,7 +116,6 @@ export const toggleGlobalBreakpoint = async (host: string, apiKey: string, enabl
     return enable ? 'Interception ON' : 'Interception OFF';
 };
 
-// --- 4. NEW SESSION (RESET) ---
 export const createNewSession = async (host: string, apiKey: string): Promise<string> => {
     const url = new URL(`${host}/JSON/core/action/newSession/`);
     url.searchParams.append('apikey', apiKey);
@@ -141,7 +127,6 @@ export const createNewSession = async (host: string, apiKey: string): Promise<st
     return 'Session Reset Successful';
 };
 
-// --- 5. SITE TREE (DISCOVERY) ---
 export const getSites = async (host: string, apiKey: string): Promise<string[]> => {
     const url = new URL(`${host}/JSON/core/view/sites/`);
     url.searchParams.append('apikey', apiKey);
@@ -151,11 +136,9 @@ export const getSites = async (host: string, apiKey: string): Promise<string[]> 
     return data.sites || [];
 };
 
-// --- 6. SNAPSHOT (SAVE SESSION) ---
 export const saveSession = async (host: string, apiKey: string, fileName: string): Promise<string> => {
     const url = new URL(`${host}/JSON/core/action/snapshot/`);
     url.searchParams.append('apikey', apiKey);
-    // Note: ZAP saves this to its local directory unless full path is given
     url.searchParams.append('name', fileName);
 
     const response = await fetch(url.toString());
@@ -164,12 +147,10 @@ export const saveSession = async (host: string, apiKey: string, fileName: string
     return 'Session Saved';
 };
 
-// --- 7. STOP SCANS ---
 export const stopSpiderScan = async (host: string, apiKey: string, scanId: string): Promise<string> => {
     const url = new URL(`${host}/JSON/spider/action/stop/`);
     url.searchParams.append('apikey', apiKey);
     url.searchParams.append('scanId', scanId);
-
     const response = await fetch(url.toString());
     const data = await response.json();
     return data.Result;
@@ -178,7 +159,6 @@ export const stopSpiderScan = async (host: string, apiKey: string, scanId: strin
 export const stopAjaxSpiderScan = async (host: string, apiKey: string): Promise<string> => {
     const url = new URL(`${host}/JSON/ajaxSpider/action/stop/`);
     url.searchParams.append('apikey', apiKey);
-
     const response = await fetch(url.toString());
     const data = await response.json();
     return data.Result;
@@ -188,8 +168,17 @@ export const stopActiveScan = async (host: string, apiKey: string, scanId: strin
     const url = new URL(`${host}/JSON/ascan/action/stop/`);
     url.searchParams.append('apikey', apiKey);
     url.searchParams.append('scanId', scanId);
-
     const response = await fetch(url.toString());
     const data = await response.json();
     return data.Result;
+};
+
+// --- NEW: SHUTDOWN ZAP ---
+export const shutdownZAP = async (host: string, apiKey: string): Promise<string> => {
+    const url = new URL(`${host}/JSON/core/action/shutdown/`);
+    url.searchParams.append('apikey', apiKey);
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (data.Result !== 'OK') throw new Error('Failed to shutdown ZAP');
+    return 'ZAP Shutdown Initiated';
 };
