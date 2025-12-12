@@ -13,7 +13,7 @@ export default mergeConfig(
         manifest: {
           ...baseManifest,
           background: {
-            scripts: [ 'src/pages/background/index.ts' ]
+            scripts: ['src/pages/background/index.ts']
           },
         } as ManifestV3Export,
         browser: 'firefox',
@@ -25,7 +25,6 @@ export default mergeConfig(
     build: {
       ...baseBuildOptions,
       outDir
-      // The rollupOptions pointing to 'main' have been removed.
     },
     publicDir: resolve(__dirname, 'public'),
   })
