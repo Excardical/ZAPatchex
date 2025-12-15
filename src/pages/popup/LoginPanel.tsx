@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Browser from 'webextension-polyfill';
+import { InfoTooltip } from './InfoTooltip';
 
 interface LoginPanelProps {
     onLoginSuccess: (host: string, apiKey: string) => void;
@@ -111,7 +112,12 @@ export const LoginPanel: React.FC<LoginPanelProps> = ({ onLoginSuccess }) => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase">API Key</label>
+                        <div className="flex items-center gap-1">
+                            <label className="text-xs font-bold text-slate-500 uppercase">API Key</label>
+                            <InfoTooltip
+                                text="Open ZAP Desktop → Tools Menu → Options → API → Copy 'API Key'"
+                            />
+                        </div>
                         <input
                             type="password"
                             value={apiKeyInput}
