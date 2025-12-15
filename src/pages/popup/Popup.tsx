@@ -19,6 +19,7 @@ const Popup = () => {
   useEffect(() => {
     const init = async () => {
       try {
+        // 1. Check for Active Scan (Priority)
         const scanData = await Browser.storage.local.get(['activeScan']);
         if (scanData.activeScan && (scanData.activeScan as any).id) {
           const { host: scanHost, apiKey: scanKey } = scanData.activeScan as any;
@@ -31,12 +32,46 @@ const Popup = () => {
           }
         }
 
+        // 2. Check for Stored Credentials ("Remember Me")
         const res = await Browser.storage.local.get(['zapHost', 'zapApiKey']);
         if (res.zapHost && res.zapApiKey) {
-          setHost(res.zapHost as string);
-          setApiKey(res.zapApiKey as string);
-          setView('scanner');
+          const storedHost = res.zapHost as string;
+          const storedKey = res.zapApiKey as string;
+
+          // --- NEW: Connection Verification Logic ---
+          try {
+            // Create a timeout to prevent hanging if ZAP is "zombie" state
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s timeout for performance
+
+            const response = await fetch(`${storedHost}/JSON/core/view/version/?apikey=${storedKey}`, {
+              method: 'GET',
+              headers: { 'X-ZAP-API-Key': storedKey },
+              signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+              // Connection Valid: Proceed to Scanner
+              setHost(storedHost);
+              setApiKey(storedKey);
+              setView('scanner');
+            } else {
+              // Credentials exist but invalid (e.g. key changed): Go to Login
+              console.warn("Stored credentials invalid, redirecting to login.");
+              setView('login');
+            }
+          } catch (connErr) {
+            // Connection Failed (ZAP is likely closed): Go to Login
+            console.warn("ZAP is unreachable, redirecting to login.");
+            // Optional: You could pre-fill the host/key in LoginPanel by passing props if you wanted
+            setView('login');
+          }
+          // ------------------------------------------
+
         } else {
+          // No credentials stored
           if (res.zapHost) setHost(res.zapHost as string);
           setView('login');
         }

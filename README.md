@@ -1,117 +1,120 @@
-<h3>A work in progress, Final Year Project</h3>
-<div align="center">
-<img src="/public/OWASP_ZAP_Logo.png" alt="OWASP ZAP Logo">
-<h1>ZAP Auth Helper</h1>
-<h3>A ZAP Add-on to simplify and automate authenticated web scanning.</h3>
+ZAPatchex
+=========
 
-<h5>
-Tired of manually configuring authentication scripts? This add-on provides a user-friendly interface to set up complex authentication flows, so you can focus on finding vulnerabilities, not fighting with session management. 🛡️
-<br/>
-It's built to work seamlessly within your existing ZAP workflow.
-</h5>
+<div align="center">
+<img src="public/Icons/ZAPATCHEX_ICO.png" alt="ZAPatchex Logo" width="128"/>
+
+<h3>The Modern Browser Interface for OWASP ZAP</h3>
+
+<p>
+  <b>ZAPATCHEX</b> is a Chrome & Firefox extension that acts as a modern remote control for OWASP ZAP. 
+  Run scans, manage sessions, and view vulnerability reports directly from your browser toolbar without switching windows.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-blue?logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Vite-7-purple?logo=vite" alt="Vite">
+  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind-4-cyan?logo=tailwindcss" alt="Tailwind">
+</p>
 
 </div>
 
-Table of Contents
+Features
+--------
 
-    Introduction
+* **Seamless Connection**: Connects instantly to your local or remote ZAP instance via API Key.
+* **Scan Control**:
+    * **Standard Mode**: Runs the traditional Spider to map applications.
+    * **Attack Mode**: Launches the Active Scanner to find vulnerabilities.
+    * **AJAX Spider**: Optional support for modern JavaScript-heavy applications.
+* **Real-time Monitoring**: View scan progress bars and status updates directly in the popup.
+* **Vulnerability Reporting**:
+    * Browse alerts filtered by site.
+    * View detailed risk analysis (High/Medium/Low), confidence levels, and evidence.
+    * **Code Solutions**: Get templated code fixes tailored to the specific vulnerability and language (PHP, Java, JS, etc.).
+* **Session Management**: Save snapshots, create new sessions, or shutdown ZAP from the extension.
+* **Dark Mode UI**: A clean, developer-friendly interface built with Tailwind CSS.
 
-    Features
-
-    Installation
-
-    Getting Started
-
-    Documentation
-
-Introduction <a name="introduction"></a>
-
-ZAP Auth Helper is an add-on for OWASP ZAP designed to streamline the process of configuring authenticated scans. It provides a dedicated UI panel to manage authentication strategies like form-based login, JSON Web Tokens (JWT), and OAuth 2.0, complete with automatic token detection, session verification, and script generation.
-
-This add-on is perfect for security professionals and developers who regularly perform authenticated scans and want a faster, more reliable way to handle user sessions.
-
-Features <a name="features"></a>
-
-    Intuitive UI: A dedicated tab in ZAP for configuring all authentication settings. No more manual scripting for common scenarios!
-
-    Multiple Auth Methods: Out-of-the-box support for:
-
-        Form-based authentication
-
-        JSON Web Tokens (JWT), including automatic refresh token handling
-
-        OAuth 2.0 flows
-
-    Auto-Detection: Automatically detects login forms and JWTs in HTTP traffic to suggest configurations.
-
-    Session Verification: Define logged-in/logged-out patterns to ensure ZAP's scanner remains authenticated throughout the scan.
-
-    Context-Aware: Easily apply and manage different authentication configurations for different ZAP Contexts.
-
-    Import/Export: Save and load your authentication configurations to reuse across projects.
-
-Installation <a name="installation"></a>
-(In Progress...)
 Prerequisites
+-------------
 
-    OWASP ZAP version 2.12.0 or newer.
+1.  **Node.js** (v18+) & **Yarn** installed.
+2.  **OWASP ZAP** (v2.12+) installed and running.
+    * *Note: Ensure ZAP is configured to accept API calls (default: `localhost:8080`).*
 
-From the ZAP Marketplace (Recommended)
+Installation & Build
+--------------------
 
-    In ZAP, click the Manage Add-ons button (marketplace icon).
+### 1. Clone & Install Dependencies
+```bash
+git clone [https://github.com/yourusername/ZAPatchex.git](https://github.com/yourusername/ZAPatchex.git)
+cd ZAPatchex
+yarn install
+````
 
-    Select the Marketplace tab.
+### 2\. Build the Extension
 
-    Find "Auth Helper" in the list and click Install.
+You can build for either Chrome or Firefox:
 
-    Restart ZAP when prompted.
+```bash
+# For Google Chrome / Edge / Brave
+yarn build:chrome
 
-Manual Installation
+# For Firefox
+yarn build:firefox
+```
 
-    Download the latest .zap file from the Releases page.
+*The build output will be located in the `dist_chrome` or `dist_firefox` directory.*
 
-    In ZAP, go to File > Load Add-on file....
+### 3\. Load into Browser
 
-    Select the downloaded .zap file and click Open.
+#### Chrome / Edge / Brave:
 
-    ZAP will install the add-on and prompt for a restart.
+1.  Go to `chrome://extensions/`.
+2.  Enable **Developer mode** (top right toggle).
+3.  Click **Load unpacked**.
+4.  Select the `dist_chrome` folder generated in the previous step.
 
-Getting Started <a name="getting-started"></a> 
-(In Progress...)
-Once installed, the Auth Helper is ready to use.
+#### Firefox:
 
-Configure a New Authenticated Context
+1.  Go to `about:debugging#/runtime/this-firefox`.
+2.  Click **Load Temporary Add-on...**.
+3.  Select the `manifest.json` file inside the `dist_firefox` folder.
 
-    Define a Context: Make sure the target application is included in a ZAP Context. You can create one by right-clicking the site in the Sites Tree and selecting Include in Context > New Context.
+## Usage Guide
 
-    Open Auth Helper: Navigate to the Auth Helper tab located in the bottom panel of the ZAP UI.
+### 1\. Connect to ZAP
 
-    Select Context and Strategy:
+1.  Start OWASP ZAP on your machine.
+2.  Open the **ZAPatchex** extension from your browser toolbar.
+3.  Enter your ZAP **Host** (e.g., `http://localhost:8080`) and **API Key** (found in ZAP Options \> API).
+4.  Click **Connect**.
 
-        From the dropdown menu, choose the Context you want to configure.
+### 2\. Run a Scan
 
-        Click "Add New Strategy" and select the authentication type (e.g., "Form-based Authentication").
+1.  Enter the **Target URL** you wish to scan (e.g., `http://localhost:3000`).
+2.  Select a **Scan Mode**:
+      * **Standard**: Maps the site structure (Safe).
+      * **Attack**: Simulates attacks to find bugs (Active Scan).
+3.  (Optional) Check **Use AJAX Spider** if the target is a Single Page Application (SPA).
+4.  Click **Start Scan**.
 
-    Fill in the Details:
+### 3\. Analyze Results
 
-        The add-on will prompt for necessary information, such as the Login Page URL, POST data parameters, username, and password. For JWTs, it will ask for token locations.
+1.  Once the scan finishes, click **View Previous Reports**.
+2.  Select the specific site from the dropdown to filter alerts.
+3.  Click on an alert to view details.
+4.  Use the **\<View Code Fix /\>** button to see suggested code remediations for that specific vulnerability.
 
-        Use the "Auto-Detect" feature to try and populate these fields automatically from your proxied traffic.
+## Development
 
-    Verify the Setup:
+Run the development server with hot-reload support:
 
-        Define a "Logged-in Indicator" (e.g., the presence of a "Logout" button on a page) so the add-on can verify the session is active.
+```bash
+# Chrome
+yarn dev:chrome
 
-        Click the "Test" button. The add-on will attempt to log in and report its success or failure in the output panel.
-
-    Enable and Scan: Once verification is successful, check the "Enable for Context" box. Now, when you run an Active Scan or Spider against this Context, ZAP will automatically handle authentication. ✅
-
-Documentation <a name="documentation"></a>
-
-This add-on leverages core ZAP functionalities. For more advanced use cases, the following resources are helpful:
-
-    OWASP ZAP User Guide
-
-    ZAP Authentication and Session Management
-
-    ZAP Scripting Documentation
+# Firefox
+yarn dev:firefox
+```
