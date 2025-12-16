@@ -336,6 +336,19 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     });
   };
 
+  const handleDisconnectClick = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Disconnect?',
+      message: 'Are you sure you want to disconnect?\nYou will be returned to the login screen.',
+      type: 'warning',
+      onConfirm: () => {
+        closeConfirmModal();
+        if (onDisconnect) onDisconnect();
+      }
+    });
+  };
+
   const handleCopyPath = () => {
     if (savedPath) {
       navigator.clipboard.writeText(savedPath);
@@ -427,7 +440,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         <div className="absolute top-2 right-2 flex flex-row items-center gap-3 z-50 pointer-events-auto">
           {onDisconnect && (
             <button
-              onClick={onDisconnect}
+              onClick={handleDisconnectClick}
               className="p-1.5 rounded-full bg-yellow-500/10 hover:bg-yellow-600 text-yellow-500 hover:text-white transition-colors border border-yellow-500/20 shadow-sm"
               title="Disconnect (Logout)"
             >
