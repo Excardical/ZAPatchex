@@ -14,18 +14,25 @@
     "dev": "nodemon --config nodemon.chrome.json",
     "dev:chrome": "nodemon --config nodemon.chrome.json",
     "dev:firefox": "nodemon --config nodemon.firefox.json",
-    "extract-zap": "node --loader ts-node/esm src/scripts/zap-extractor.ts"
+    "extract-zap": "node --loader ts-node/esm src/scripts/zap-extractor.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "type": "module",
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "react-syntax-highlighter": "^15.6.6",
     "webextension-polyfill": "^0.12.0"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.2.0",
     "@tailwindcss/vite": "^4.1.11",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/chrome": "^0.1.22",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
@@ -43,11 +50,13 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "fs-extra": "^11.3.2",
+    "jsdom": "^27.3.0",
     "nodemon": "^3.1.10",
     "tailwindcss": "^4.1.16",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^7.1.9",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.15"
   }
 }
