@@ -38,6 +38,12 @@
       ],
       "@pages/*": [
         "src/pages/*"
+      ],
+      "@scripts/*": [
+        "src/scripts/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
       ]
     }
   },
