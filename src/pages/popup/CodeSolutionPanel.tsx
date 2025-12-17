@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { CodeSolution } from './VulnerabilityPanel';
+import { VulnerabilityPanel, GroupedAlert, CodeSolution } from './VulnerabilityPanel';
 
 interface CodeSolutionPanelProps {
   solutions: CodeSolution[];
