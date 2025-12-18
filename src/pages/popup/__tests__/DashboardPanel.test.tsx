@@ -5,7 +5,7 @@ import { DashboardPanel } from '../DashboardPanel';
 import * as ZapApi from '@utils/zapApi';
 
 // 1. Correctly mock the module so methods are spies
-vi.mock('../../utils/zapApi', () => ({
+vi.mock('@utils/zapApi', () => ({
     getSites: vi.fn(),
 }));
 

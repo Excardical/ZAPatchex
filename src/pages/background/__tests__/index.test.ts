@@ -48,15 +48,15 @@ describe('Background Script Logic', () => {
         // Reset listeners
         listeners.onChanged = null;
         listeners.onAlarm = null;
-
         // Import the file to run its top-level code (register listeners)
         // Note: In a real build, we might separate logic from side-effects, 
         // but here we rely on the mock setup.
-        await import('@pages/popup/index');
+        await import('../index');
     });
 
     afterEach(() => {
         vi.resetModules(); // Important to re-evaluate the module for fresh listeners
+        document.body.innerHTML = ''; // Cleanup
     });
 
     it('TC-BG-01: Registers listeners on load', () => {

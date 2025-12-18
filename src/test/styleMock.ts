@@ -1,0 +1,1 @@
+export default {}; // This file is used by Vitest to mock all CSS imports.
