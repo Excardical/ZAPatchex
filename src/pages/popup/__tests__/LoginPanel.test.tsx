@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginPanel } from '@pages/popup/LoginPanel';
 import Browser from 'webextension-polyfill';
 
+vi.mock('webextension-polyfill');
 global.fetch = vi.fn();
 
 describe('LoginPanel Component', () => {
@@ -57,7 +58,7 @@ describe('LoginPanel Component', () => {
         fireEvent.click(screen.getByText('Connect'));
 
         await waitFor(() => {
-            expect(screen.getByText(/Could not connect/i)).toBeInTheDocument();
+            expect(screen.getByText(/Failed to fetch/i)).toBeInTheDocument();
         });
     });
 });
