@@ -82,4 +82,21 @@ describe('CodeSolutionPanel Component', () => {
         const link = screen.getByText('OWASP');
         expect(link).toHaveAttribute('href', 'https://owasp.org');
     });
+
+    it('TC-CODE-06: Disables navigation buttons at boundaries', () => {
+        render(<CodeSolutionPanel {...defaultProps} />);
+
+        const prevBtn = screen.getByText('«').closest('button');
+        const nextBtn = screen.getByText('»').closest('button');
+
+        // Initially at 0, Prev should be disabled
+        expect(prevBtn).toBeDisabled();
+        expect(nextBtn).toBeEnabled();
+
+        // Move to end (index 1 of 2)
+        fireEvent.click(nextBtn!); // Add ! if TS complains about null, though checking above confirms existence
+
+        expect(prevBtn).toBeEnabled();
+        expect(nextBtn).toBeDisabled();
+    });
 });

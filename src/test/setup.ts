@@ -10,6 +10,7 @@ beforeAll(() => {
     global.console.warn = vi.fn();
     global.console.info = vi.fn();
     global.console.debug = vi.fn();
+    process.env.DEBUG_PRINT_LIMIT = '0';
 });
 // --------------------------------------
 

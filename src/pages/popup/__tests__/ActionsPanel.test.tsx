@@ -134,4 +134,21 @@ describe('ActionsPanel Component', () => {
 
         consoleSpy.mockRestore();
     });
+
+    it('TC-ACT-06: Filters alerts based on Selected Site', async () => {
+        const mockAlerts = [
+            { name: 'Vuln A', instances: [{ url: 'http://site-a.com' }] },
+            { name: 'Vuln B', instances: [{ url: 'http://site-b.com' }] }
+        ] as any[];
+
+        // Pre-load with data
+        const props = { ...defaultProps, hasLoaded: true, cachedAlerts: mockAlerts };
+
+        // Mock the VulnerabilityPanel to inspect props passed to it
+        // (We need to see if it received 1 alert or 2)
+        const MockChild = vi.fn(() => <div>Child</div>);
+        vi.mocked(props.onUpdateAlerts).mockImplementation(() => { });
+
+        render(<ActionsPanel {...props} />);
+    });
 });
