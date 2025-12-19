@@ -34,6 +34,7 @@ describe('ZAPScannerPanel Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        (Browser.storage.local.get as any).mockResolvedValue({});
     });
 
     afterEach(() => {
@@ -127,5 +128,66 @@ describe('ZAPScannerPanel Component', () => {
 
         expect(await screen.findByText(/Resuming spider.../i)).toBeInTheDocument();
         expect(screen.queryByPlaceholderText('https://example.com')).not.toBeInTheDocument();
+    });
+
+    it('TC-SCAN-06: Starts AJAX Spider when toggle is checked', async () => {
+        (ZapApi.startAjaxSpiderScan as any).mockResolvedValue('ajax_scan_running');
+        (ZapApi.checkAjaxSpiderStatus as any).mockResolvedValue('stopped'); // Finish immediately
+
+        render(<ZAPScannerPanel {...defaultProps} />);
+
+        // 1. Enter URL
+        fireEvent.change(screen.getByPlaceholderText('https://example.com'), { target: { value: 'http://ajax.com' } });
+
+        // 2. Toggle AJAX
+        fireEvent.click(screen.getByLabelText('Use AJAX Spider (for modern JS apps)'));
+
+        // 3. Start
+        fireEvent.click(screen.getByText('START SCAN'));
+
+        await waitFor(() => {
+            expect(ZapApi.startAjaxSpiderScan).toHaveBeenCalledWith(defaultProps.host, defaultProps.apiKey, 'http://ajax.com');
+        });
+    });
+
+    it('TC-SCAN-07: "New Session" opens modal and triggers API on confirm', async () => {
+        (ZapApi.createNewSession as any).mockResolvedValue('Session Reset Successful');
+
+        render(<ZAPScannerPanel {...defaultProps} />);
+
+        // 1. Click New Session Button
+        fireEvent.click(screen.getByText('New Session'));
+
+        // 2. Check Modal Appears
+        expect(screen.getByText('Reset Session?')).toBeInTheDocument();
+
+        // 3. Click Confirm in Modal
+        fireEvent.click(screen.getByText('Confirm'));
+
+        await waitFor(() => {
+            expect(ZapApi.createNewSession).toHaveBeenCalled();
+            expect(screen.getByText('Session reset successfully.')).toBeInTheDocument();
+        });
+    });
+
+    it('TC-SCAN-08: "Shutdown" opens modal and triggers disconnect', async () => {
+        (ZapApi.shutdownZAP as any).mockResolvedValue('ZAP Shutdown Initiated');
+
+        render(<ZAPScannerPanel {...defaultProps} />);
+
+        // 1. Find Power Off button (by title)
+        const powerBtn = screen.getByTitle('Power Off ZAP');
+        fireEvent.click(powerBtn);
+
+        // 2. Check Modal
+        expect(screen.getByText('Power Off ZAP?')).toBeInTheDocument();
+
+        // 3. Confirm
+        fireEvent.click(screen.getByText('Confirm'));
+
+        await waitFor(() => {
+            expect(ZapApi.shutdownZAP).toHaveBeenCalled();
+            expect(defaultProps.onDisconnect).toHaveBeenCalled();
+        });
     });
 });

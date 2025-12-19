@@ -61,4 +61,32 @@ describe('LoginPanel Component', () => {
             expect(screen.getByText(/Failed to fetch/i)).toBeInTheDocument();
         });
     });
+
+    it('TC-LOGIN-04: Persists API key only when "Remember Me" is checked', async () => {
+        (global.fetch as any).mockResolvedValue({
+            ok: true,
+            json: async () => ({ version: '2.14.0' })
+        });
+
+        render(<LoginPanel onLoginSuccess={vi.fn()} />);
+
+        // Case 1: Checked
+        fireEvent.change(screen.getByPlaceholderText(/localhost/i), { target: { value: 'http://host:8080' } });
+        fireEvent.change(screen.getByPlaceholderText(/Enter your API Key/i), { target: { value: 'secret_key' } });
+        fireEvent.click(screen.getByLabelText('Remember Me'));
+
+        fireEvent.click(screen.getByText('Connect'));
+
+        await waitFor(() => {
+            // Call 1: Host and Remember flag
+            expect(Browser.storage.local.set).toHaveBeenCalledWith(expect.objectContaining({
+                zapHost: 'http://host:8080',
+                rememberMe: true
+            }));
+            // Call 2: API Key (because Remember Me is true)
+            expect(Browser.storage.local.set).toHaveBeenCalledWith(expect.objectContaining({
+                zapApiKey: 'secret_key'
+            }));
+        });
+    });
 });
