@@ -14,39 +14,35 @@ interface ActiveScanState {
   status?: string;
 }
 
-// Listen for changes in storage to start/stop polling
-Browser.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.activeScan) {
-    if (changes.activeScan.newValue) {
-      // Scan started or updated, ensure alarm is running
-      Browser.alarms.create(ALARM_NAME, { periodInMinutes: 0.1 }); // Check every 6 seconds
-      // Clear any leftover badges from previous runs
-      Browser.action.setBadgeText({ text: '' });
-    } else {
-      // Scan removed (completed or stopped by user in popup)
-      Browser.alarms.clear(ALARM_NAME);
-      // We also clear the badge here, assuming the user opened the popup to see the result
-      Browser.action.setBadgeText({ text: '' });
-    }
-  }
-});
+// Local cache to track scan state efficiently, even if storage is cleared quickly
+let currentScan: ActiveScanState | null = null;
 
-// Poll status
-Browser.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name !== ALARM_NAME) return;
-
-  try {
+/**
+ * Polls the current scan status.
+ * Can be called by the Alarm or immediately upon storage changes.
+ */
+const pollScanStatus = async () => {
+  // If local cache is empty (e.g., Service Worker woke up), try to hydrate from storage
+  if (!currentScan) {
     const data = await Browser.storage.local.get('activeScan');
-    if (!data.activeScan) {
+    if (data.activeScan) {
+      currentScan = data.activeScan as ActiveScanState;
+    } else {
+      // No scan to track
       Browser.alarms.clear(ALARM_NAME);
       return;
     }
+  }
 
-    const { id, type, host, apiKey, notified } = data.activeScan as ActiveScanState;
+  const { id, type, host, apiKey, notified } = currentScan;
 
-    // If we already notified for this specific scan session, don't spam
-    if (notified) return;
+  // If already notified, stop polling
+  if (notified) {
+    Browser.alarms.clear(ALARM_NAME);
+    return;
+  }
 
+  try {
     let progress = 0;
 
     if (type === 'spider') {
@@ -59,8 +55,11 @@ Browser.alarms.onAlarm.addListener(async (alarm) => {
     }
 
     if (progress >= 100) {
+      // Update local cache to prevent duplicate notifications
+      currentScan.notified = true;
+
       // 1. Send Notification
-      Browser.notifications.create({
+      await Browser.notifications.create({
         type: 'basic',
         iconUrl: 'Icons/icon-128.png',
         title: 'ZAPatchex Scan Complete',
@@ -71,10 +70,16 @@ Browser.alarms.onAlarm.addListener(async (alarm) => {
       Browser.action.setBadgeText({ text: '●' });
       Browser.action.setBadgeBackgroundColor({ color: '#00FF00' }); // Green
 
-      // 3. Mark as notified so we don't spam notifications if the user doesn't open it immediately
-      await Browser.storage.local.set({
-        activeScan: { ...data.activeScan, notified: true }
-      });
+      // 3. Persist 'notified' state to storage (if the entry still exists)
+      // This prevents the popup from thinking it's un-notified if it re-reads storage
+      const currentStorage = await Browser.storage.local.get('activeScan');
+      const storedScan = currentStorage.activeScan as ActiveScanState | undefined;
+
+      if (storedScan && storedScan.id === id) {
+        await Browser.storage.local.set({
+          activeScan: { ...storedScan, notified: true }
+        });
+      }
 
       // Stop the alarm
       Browser.alarms.clear(ALARM_NAME);
@@ -82,6 +87,66 @@ Browser.alarms.onAlarm.addListener(async (alarm) => {
 
   } catch (error) {
     console.error('Background polling error:', error);
+  }
+};
+
+// Listen for changes in storage to start/stop polling
+Browser.storage.onChanged.addListener(async (changes, area) => {
+  if (area === 'local' && changes.activeScan) {
+    const newValue = changes.activeScan.newValue as ActiveScanState | undefined;
+    const oldValue = changes.activeScan.oldValue as ActiveScanState | undefined;
+
+    if (newValue) {
+      // Update local cache
+      currentScan = newValue;
+
+      // Check if this is a NEW scan or just an update to an existing one
+      const isNewScan = !oldValue || oldValue.id !== newValue.id;
+
+      if (isNewScan) {
+        // 1. Start polling IMMEDIATELY to catch short scans (1-2s)
+        pollScanStatus();
+
+        // 2. Create the alarm for subsequent checks
+        // We only create it on a new scan to avoid resetting the timer on every progress update
+        Browser.alarms.create(ALARM_NAME, { periodInMinutes: 0.1 }); // Check every 6 seconds
+
+        // Clear badge for new scan
+        Browser.action.setBadgeText({ text: '' });
+      }
+      // If it's just an update (isNewScan === false), we do NOTHING.
+      // This allows the existing alarm to continue firing without being reset.
+
+    } else {
+      // Scan removed from storage (completed or stopped by user)
+
+      // If we were tracking a scan, it might have finished and the Popup cleared it.
+      // We must perform a FINAL check to ensure we send the notification if it succeeded.
+      let scanToFinalize = currentScan;
+
+      // If local cache is empty (SW restart), try to use the oldValue from the change event
+      if (!scanToFinalize && oldValue) {
+        scanToFinalize = oldValue;
+        currentScan = scanToFinalize; // Set cache for the poll function
+      }
+
+      if (scanToFinalize && !scanToFinalize.notified) {
+        await pollScanStatus();
+      }
+
+      // Cleanup
+      currentScan = null;
+      Browser.alarms.clear(ALARM_NAME);
+      // We don't clear the badge here immediately so the user can see the Green Dot result
+      // if they haven't acknowledged the notification yet.
+    }
+  }
+});
+
+// Poll status on Alarm trigger
+Browser.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === ALARM_NAME) {
+    pollScanStatus();
   }
 });
 

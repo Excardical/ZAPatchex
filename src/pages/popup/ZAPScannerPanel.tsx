@@ -2,19 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Browser from 'webextension-polyfill';
 import {
   startSpiderScan,
-  startAjaxSpiderScan,
   checkSpiderStatus,
-  checkAjaxSpiderStatus,
   startActiveScan,
   checkActiveScanStatus,
   stopSpiderScan,
-  stopAjaxSpiderScan,
   stopActiveScan,
   createNewSession,
   saveSession,
   shutdownZAP,
   getZapHomePath
 } from '../../utils/zapApi';
+import { InfoTooltip } from './InfoTooltip';
 
 interface ZapScannerPanelProps {
   host: string;
@@ -25,7 +23,7 @@ interface ZapScannerPanelProps {
   onDisconnect?: () => void;
 }
 
-// --- NEW: Custom Confirmation Modal Component ---
+// --- Custom Confirmation Modal Component ---
 interface ConfirmModalProps {
   isOpen: boolean;
   title: string;
@@ -63,7 +61,6 @@ const ConfirmationModal: React.FC<ConfirmModalProps> = ({ isOpen, title, message
           </div>
         </div>
 
-        {/* FIXED: Uniform Button Sizing & Layout */}
         <div className="bg-slate-900/50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 items-center justify-center">
           <button
             type="button"
@@ -87,10 +84,9 @@ const ConfirmationModal: React.FC<ConfirmModalProps> = ({ isOpen, title, message
 
 export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, onScanStart, onScanComplete, onViewReports, onDisconnect }) => {
   const [targetUrl, setTargetUrl] = useState<string>('');
-  const [useAjaxSpider, setUseAjaxSpider] = useState<boolean>(false);
   const [scanStatusMessage, setScanStatusMessage] = useState<string>('');
   const [scanId, setScanId] = useState<string | null>(null);
-  const [scanType, setScanType] = useState<'spider' | 'ajaxSpider' | 'active' | null>(null);
+  const [scanType, setScanType] = useState<'spider' | 'active' | null>(null);
   const [scanProgress, setScanProgress] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,11 +127,10 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       try {
         const storage = await Browser.storage.local.get(['activeScan']);
         if (storage.activeScan) {
-          const { id, type, url, ajax } = storage.activeScan as any;
+          const { id, type, url } = storage.activeScan as any;
           setScanId(id);
           setScanType(type);
           setTargetUrl(url);
-          setUseAjaxSpider(ajax);
           setIsLoading(true);
           setScanStatusMessage(`Resuming ${type}...`);
         } else {
@@ -154,7 +149,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
           id: scanId,
           type: scanType,
           url: targetUrl,
-          ajax: useAjaxSpider,
           host,
           apiKey
         }
@@ -162,7 +156,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     } else if (!isLoading && !scanId) {
       Browser.storage.local.remove('activeScan');
     }
-  }, [scanId, scanType, targetUrl, useAjaxSpider, isLoading, host, apiKey]);
+  }, [scanId, scanType, targetUrl, isLoading, host, apiKey]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -170,15 +164,10 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       intervalId = setInterval(async () => {
         try {
           let progress = 0;
-          let friendlyType = scanType === 'spider' ? 'Spider' : scanType === 'active' ? 'Active Scan' : 'AJAX Spider';
+          let friendlyType = scanType === 'spider' ? 'Spider' : 'Active Scan';
 
           if (scanType === 'spider') progress = await checkSpiderStatus(host, apiKey, scanId);
           else if (scanType === 'active') progress = await checkActiveScanStatus(host, apiKey, scanId);
-          else if (scanType === 'ajaxSpider') {
-            const status = await checkAjaxSpiderStatus(host, apiKey);
-            friendlyType = `AJAX Spider (${status})`;
-            progress = status === 'stopped' ? 100 : 50;
-          }
 
           setScanProgress(progress);
           setScanStatusMessage(`${friendlyType}: ${progress}%`);
@@ -219,19 +208,11 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
 
     try {
       let id = '';
-      let type: 'spider' | 'ajaxSpider' | 'active' = 'spider';
+      let type: 'spider' | 'active' = 'spider';
 
       if (selectedMode === 'standard') {
-        if (useAjaxSpider) {
-          const response = await startAjaxSpiderScan(host, apiKey, targetUrl);
-          if (response) {
-            type = 'ajaxSpider';
-            id = 'ajax';
-          } else { throw new Error("Failed to start AJAX Spider"); }
-        } else {
-          id = await startSpiderScan(host, apiKey, targetUrl);
-          type = 'spider';
-        }
+        id = await startSpiderScan(host, apiKey, targetUrl);
+        type = 'spider';
       } else {
         id = await startActiveScan(host, apiKey, targetUrl);
         type = 'active';
@@ -251,7 +232,6 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
     if (!scanId || !scanType) return;
     try {
       if (scanType === 'spider') await stopSpiderScan(host, apiKey, scanId);
-      else if (scanType === 'ajaxSpider') await stopAjaxSpiderScan(host, apiKey);
       else if (scanType === 'active') await stopActiveScan(host, apiKey, scanId);
 
       setScanStatusMessage("Stopped by user.");
@@ -494,8 +474,8 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
                   onChange={(e) => setTargetUrl(e.target.value)}
                   className="w-full bg-slate-800/50 text-sm p-3 rounded-lg border border-slate-700 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all text-white placeholder-slate-600 shadow-inner"
                 />
-                <div className="absolute right-3 top-3 text-slate-500 group-focus-within:text-cyan-500 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                <div className="absolute right-2 top-2.5 z-20">
+                  <InfoTooltip text="Auto-detects URL from the active tab." />
                 </div>
               </div>
             </div>
@@ -537,17 +517,15 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 pl-1">
-              <input
-                type="checkbox"
-                id="useAjax"
-                checked={useAjaxSpider}
-                onChange={e => setUseAjaxSpider(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-600 text-cyan-500 focus:ring-offset-slate-900 focus:ring-cyan-500 bg-slate-800"
-              />
-              <label htmlFor="useAjax" className="text-xs text-slate-300 select-none cursor-pointer">
-                Use AJAX Spider (for modern JS apps)
-              </label>
+            {/* INTEGRATED STATUS BAR */}
+            <div className="mt-2 mb-2 flex items-center justify-between px-3 py-1.5 bg-slate-800/80 rounded border border-slate-700/50 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)] animate-pulse"></div>
+                <span className="text-[10px] font-bold text-slate-300">ZAP Engine Ready</span>
+              </div>
+              <div className="text-[10px] text-white font-bold font-mono truncate max-w-[150px]" title={host}>
+                {host.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+              </div>
             </div>
 
             <button
