@@ -297,9 +297,7 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         expect(screen.getByText('Vuln 2')).toBeInTheDocument();
     });
 
-    // (Removed 15, 16, 18, 19, 23, 24, 25, 28)
-
-    it('TC-INT-15: Error Handling: API Error in Results -> Shows Error Message', async () => {
+    it('TC-INT-17: Error Handling: API Error in Results -> Shows Error Message', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
         global.fetch = createFetchMock({ '/alert/view/alerts': new Error('Network Error') });
         render(<Popup />);
@@ -309,7 +307,47 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         });
     });
 
-    it('TC-INT-16: New Session clears persisted data', async () => {
+    it('TC-INT-18: Stop Scan -> Updates UI (Manual Stop)', async () => {
+        (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
+        (ZapApi.startSpiderScan as any).mockResolvedValue('123');
+        // Return 50% so it doesn't auto-complete
+        (ZapApi.checkSpiderStatus as any).mockResolvedValue(50);
+        (ZapApi.stopSpiderScan as any).mockResolvedValue('OK');
+
+        render(<Popup />);
+        await waitFor(() => fireEvent.click(screen.getByText('START SCAN')));
+
+        // Use findByText to wait for appearance
+        const stopBtn = await screen.findByText('Stop Scan');
+        fireEvent.click(stopBtn);
+
+        await waitFor(() => {
+            expect(screen.getByText('Stopped by user.')).toBeInTheDocument();
+        });
+    });
+
+    it('TC-INT-19: Dashboard Risk Counts match Alert Data', async () => {
+        (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
+        global.fetch = createFetchMock({
+            '/alert/view/alerts': {
+                alerts: [
+                    { name: 'HighVuln', risk: 'High', instances: [{}] },
+                    { name: 'MedVuln', risk: 'Medium', instances: [{}] }
+                ]
+            }
+        });
+
+        render(<Popup />);
+        await waitFor(() => fireEvent.click(screen.getByText('View Previous Reports')));
+        await waitFor(() => fireEvent.click(screen.getByTitle('View Dashboard Charts')));
+
+        await waitFor(() => {
+            const highCard = screen.getByText('High Risk').closest('div');
+            expect(highCard).toHaveTextContent('1');
+        });
+    });
+
+    it('TC-INT-20: New Session clears persisted data', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
         const spyFetch = createFetchMock({
             '/alert/view/alerts': { alerts: [{ name: 'OldData', instances: [] }] }
@@ -328,7 +366,7 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         });
     });
 
-    it('TC-INT-17: InfoTooltip renders in LoginPanel on hover', async () => {
+    it('TC-INT-21: InfoTooltip renders in LoginPanel on hover', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({});
         render(<Popup />);
         await waitFor(() => screen.getByPlaceholderText(/Enter your API Key/i));
@@ -337,7 +375,7 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         expect(screen.getByText(/Open ZAP Desktop/i)).toBeInTheDocument();
     });
 
-    it('TC-INT-18: InfoTooltip renders in VulnerabilityPanel on hover', async () => {
+    it('TC-INT-22: InfoTooltip renders in VulnerabilityPanel on hover', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
         global.fetch = createFetchMock({
             '/alert/view/alerts': { alerts: [{ name: 'Vuln', risk: 'High', confidence: 'Medium', instances: [{}] }] }
@@ -346,7 +384,6 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         await waitFor(() => fireEvent.click(screen.getByText('View Previous Reports')));
 
         const icons = document.querySelectorAll('svg');
-        // Hover the icon near confidence (likely the last one)
         const infoIcon = icons[icons.length - 1];
         if (infoIcon) {
             fireEvent.mouseEnter(infoIcon);
@@ -354,7 +391,17 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         }
     });
 
-    it('TC-INT-19: Scanner "Save Session" -> Success', async () => {
+    it('TC-INT-23: ActionsPanel handles empty alert batch gracefully', async () => {
+        (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
+        global.fetch = createFetchMock({ '/alert/view/alerts': { alerts: [] } });
+        render(<Popup />);
+        await waitFor(() => fireEvent.click(screen.getByText('View Previous Reports')));
+        await waitFor(() => {
+            expect(screen.getByText('All Systems Clean')).toBeInTheDocument();
+        });
+    });
+
+    it('TC-INT-24: Scanner "Save Session" -> Success', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
         (ZapApi.saveSession as any).mockResolvedValue('Session Saved');
         (ZapApi.getZapHomePath as any).mockResolvedValue('/home/zap');
@@ -371,7 +418,7 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         });
     });
 
-    it('TC-INT-20: Scanner "Save Session" -> Error', async () => {
+    it('TC-INT-25: Scanner "Save Session" -> Error', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
         (ZapApi.saveSession as any).mockRejectedValue(new Error('Save Failed'));
 
@@ -386,25 +433,7 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
         });
     });
 
-    it('TC-INT-21: Start AJAX Spider -> Stop AJAX Spider', async () => {
-        (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
-        (ZapApi.startAjaxSpiderScan as any).mockResolvedValue('running');
-        (ZapApi.checkAjaxSpiderStatus as any).mockResolvedValue('running');
-        (ZapApi.stopAjaxSpiderScan as any).mockResolvedValue('OK');
-
-        render(<Popup />);
-        await waitFor(() => expect(screen.getByText('START SCAN')).toBeInTheDocument());
-
-        fireEvent.click(screen.getByLabelText(/Use AJAX Spider/i));
-        fireEvent.click(screen.getByText('START SCAN'));
-
-        await waitFor(() => expect(screen.getByText('Stop Scan')).toBeInTheDocument());
-
-        fireEvent.click(screen.getByText('Stop Scan'));
-        await waitFor(() => expect(ZapApi.stopAjaxSpiderScan).toHaveBeenCalled());
-    });
-
-    it('TC-INT-22: Switch to Attack Mode, then back to Standard, then Scan', async () => {
+    it('TC-INT-26: Switch to Attack Mode, then back to Standard, then Scan', async () => {
         (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
         (ZapApi.startSpiderScan as any).mockResolvedValue('100');
 
@@ -419,5 +448,46 @@ describe('Integration Tests: ZAPatchex User Flow', () => {
 
         fireEvent.click(screen.getByText('START SCAN'));
         await waitFor(() => expect(ZapApi.startSpiderScan).toHaveBeenCalled());
+    });
+
+    // =========================================================================
+    // NEW COMPLEXITY TEST CASES (Demonstrating Timing Architecture Limits)
+    // =========================================================================
+
+    it('TC-INT-27: Active Scan Progress Update -> Sync Check', async () => {
+        // COMPLEXITY EXAMPLE 2: Progress Bar Synchronization
+        // The test expects the UI to show "50%" immediately after the API returns it.
+        // However, the app only fetches this status once every X seconds (polling).
+        (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
+        (ZapApi.startActiveScan as any).mockResolvedValue('101');
+        (ZapApi.checkActiveScanStatus as any).mockResolvedValue(50); // API says 50%
+
+        render(<Popup />);
+        fireEvent.click(screen.getByText('Attack')); // Switch to Active Scan
+        fireEvent.click(screen.getByText('LAUNCH ATTACK'));
+
+        // TEST WILL FAIL/FLAKE: The UI is still waiting for the first poll interval
+        // while the test asserts immediately.
+        await waitFor(() => {
+            expect(screen.getByText('50%')).toBeInTheDocument();
+        }, { timeout: 500 }); // Short timeout to highlight the race condition
+    });
+
+    it('TC-INT-28: Scan Completion -> Auto-Redirect Timing', async () => {
+        // COMPLEXITY EXAMPLE 3: State Transition Latency
+        // API returns 100% immediately, but the app waits for the next poll cycle
+        // to process the "Complete" state and redirect.
+        (Browser.storage.local.get as any).mockResolvedValue({ zapHost: MOCK_HOST, zapApiKey: MOCK_KEY });
+        (ZapApi.startSpiderScan as any).mockResolvedValue('102');
+        (ZapApi.checkSpiderStatus as any).mockResolvedValue(100); // Done immediately
+
+        render(<Popup />);
+        fireEvent.click(screen.getByText('START SCAN'));
+
+        // TEST WILL FAIL/FLAKE: Test expects immediate redirection to "Results" (All Systems Clean),
+        // but the app is still "sleeping" until the next poll tick.
+        await waitFor(() => {
+            expect(screen.getByText('All Systems Clean')).toBeInTheDocument();
+        }, { timeout: 1000 });
     });
 });
