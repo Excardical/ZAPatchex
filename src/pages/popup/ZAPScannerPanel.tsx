@@ -173,11 +173,17 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
           setScanStatusMessage(`${friendlyType}: ${progress}%`);
 
           if (progress >= 100) {
-            setScanStatusMessage(`${friendlyType} Complete! ✅`);
-            setScanId(null);
-            setIsLoading(false);
+            // --- UPDATED COMPLETION LOGIC ---
+            setScanProgress(100); // Ensure bar shows full
+            setScanStatusMessage("Scan Complete! Redirecting...");
+
+            setScanId(null); // Stop polling
+            // DO NOT set isLoading(false) here. 
+            // We keep the loading screen active to act as a "buffering" screen.
+
             Browser.storage.local.remove('activeScan');
-            setTimeout(onScanComplete, 1500);
+            setTimeout(onScanComplete, 2000); // 2-second smooth transition
+            // --------------------------------
           }
         } catch (e) {
           console.error("Status check failed", e);
@@ -199,7 +205,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       return;
     }
     if (onScanStart) onScanStart();
-
+    await Browser.storage.local.remove(['zap_cached_alerts']);
     setError(null);
     setSuccessMsg(null);
     setSavedPath(null);
@@ -252,6 +258,7 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
         closeConfirmModal();
         try {
           await createNewSession(host, apiKey);
+          await Browser.storage.local.remove(['zap_cached_alerts']);
           setSuccessMsg("Session reset successfully.");
           setSavedPath(null);
           setError(null);
@@ -346,29 +353,43 @@ export const ZAPScannerPanel: React.FC<ZapScannerPanelProps> = ({ host, apiKey, 
       <p className="font-bold text-cyan-400 text-sm mb-1 uppercase tracking-wider">
         {scanStatusMessage || "Scan in Progress..."}
       </p>
+
+      {/* Updated Text Condition */}
       <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        ZAPatchex is analyzing <strong>{targetUrl}</strong>.<br />This may take several minutes.
+        {scanProgress === 100
+          ? "Finalizing report generation..."
+          : <>ZAPatchex is analyzing <strong>{targetUrl}</strong>.<br />This may take several minutes.</>
+        }
       </p>
-      {scanProgress !== null && scanProgress < 100 && (
+
+      {/* Always show bar if we have progress, even at 100% */}
+      {scanProgress !== null && (
         <div className="w-64 mx-auto bg-slate-700/50 rounded-full h-1.5 overflow-hidden mb-4 relative">
           <div className="absolute top-0 left-0 h-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.7)] transition-all duration-500 ease-out" style={{ width: `${scanProgress}%` }}></div>
         </div>
       )}
-      <div className="py-2 px-3 bg-slate-700/30 rounded border border-slate-600/50 inline-block w-full">
-        <p className="text-[11px] text-slate-300 font-semibold flex items-center justify-center gap-2">
-          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          You can close this window
-        </p>
-        <p className="text-[10px] text-slate-400 mt-0.5">
-          We'll notify you when it's done.
-        </p>
-      </div>
-      <button
-        onClick={handleStopScan}
-        className="mt-4 text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-widest border-b border-red-900/0 hover:border-red-400 transition-all cursor-pointer"
-      >
-        Stop Scan
-      </button>
+
+      {scanProgress !== 100 && (
+        <div className="py-2 px-3 bg-slate-700/30 rounded border border-slate-600/50 inline-block w-full">
+          <p className="text-[11px] text-slate-300 font-semibold flex items-center justify-center gap-2">
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            You can close this window
+          </p>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            We'll notify you when it's done.
+          </p>
+        </div>
+      )}
+
+      {/* Hide Stop button if scan is theoretically finishing (scanId is null but isLoading is true) */}
+      {scanId && (
+        <button
+          onClick={handleStopScan}
+          className="mt-4 text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-widest border-b border-red-900/0 hover:border-red-400 transition-all cursor-pointer"
+        >
+          Stop Scan
+        </button>
+      )}
     </div>
   );
 

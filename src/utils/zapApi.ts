@@ -4,6 +4,26 @@
  * Common ZAP API interactions
  */
 
+// --- SHARED TYPES ---
+export interface AlertInstance {
+    url: string;
+    param: string;
+    evidence: string;
+}
+
+export interface GroupedAlert {
+    pluginId?: number;
+    name: string;
+    description: string;
+    solution: string;
+    risk: 'High' | 'Medium' | 'Low' | 'Informational';
+    confidence: 'High' | 'Medium' | 'Low' | 'False Positive';
+    cweid?: string;
+    wascid?: string;
+    instances: AlertInstance[];
+}
+// --------------------
+
 export const startSpiderScan = async (host: string, apiKey: string, targetUrl: string): Promise<string> => {
     const url = new URL(`${host}/JSON/spider/action/scan/`);
     url.searchParams.append('apikey', apiKey);
@@ -189,4 +209,66 @@ export const shutdownZAP = async (host: string, apiKey: string): Promise<string>
     const data = await response.json();
     if (data.Result !== 'OK') throw new Error('Failed to shutdown ZAP');
     return 'ZAP Shutdown Initiated';
+};
+
+// --- NEW: Batch Fetching Logic (Background Compatible) ---
+export const fetchAllAlerts = async (host: string, apiKey: string): Promise<GroupedAlert[]> => {
+    const alertsMap = new Map<string, GroupedAlert>();
+    const MAX_INSTANCES_PER_ALERT = 80;
+    const BATCH_SIZE = 1000;
+
+    let start = 0;
+    let hasMore = true;
+
+    // Safety limit to prevent infinite loops on massive scans (20k alerts limit)
+    const MAX_TOTAL_ALERTS = 20000;
+
+    while (hasMore && start < MAX_TOTAL_ALERTS) {
+        const url = new URL(`${host}/JSON/alert/view/alerts/`);
+        url.searchParams.append('start', start.toString());
+        url.searchParams.append('count', BATCH_SIZE.toString());
+        url.searchParams.append('apikey', apiKey);
+
+        const response = await fetch(url.toString(), { headers: { 'X-ZAP-API-Key': apiKey } });
+        if (!response.ok) break;
+
+        const data = await response.json();
+        const batch = data.alerts || [];
+
+        if (batch.length === 0) {
+            hasMore = false;
+        } else {
+            // Process Batch
+            batch.forEach((alert: any) => {
+                const key = alert.alert || alert.name || 'Unknown Alert';
+
+                if (!alertsMap.has(key)) {
+                    alertsMap.set(key, {
+                        name: key,
+                        description: alert.description,
+                        solution: alert.solution,
+                        risk: alert.risk,
+                        confidence: alert.confidence,
+                        cweid: alert.cweid,
+                        wascid: alert.wascid,
+                        pluginId: alert.pluginId,
+                        instances: [],
+                    });
+                }
+
+                const group = alertsMap.get(key)!;
+                if (group.instances.length < MAX_INSTANCES_PER_ALERT) {
+                    group.instances.push({
+                        url: alert.url,
+                        param: alert.param,
+                        evidence: alert.evidence,
+                    });
+                }
+            });
+
+            start += BATCH_SIZE;
+        }
+    }
+
+    return Array.from(alertsMap.values());
 };
